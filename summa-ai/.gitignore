@@ -38,3 +38,5 @@ dump.rdb
 uploads/
 audio/
 sessions/
+
+.vercel
