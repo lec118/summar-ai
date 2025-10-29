@@ -1,2 +1,3 @@
 export * from "./parser";
-export * from "./vision-parser";
+// Vision parser temporarily disabled - Canvas dependency issues on Windows
+// export * from "./vision-parser";
