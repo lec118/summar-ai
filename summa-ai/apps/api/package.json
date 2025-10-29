@@ -14,7 +14,6 @@
   },
   "dependencies": {
     "@fastify/multipart": "^8.1.0",
-    "@summa/audio": "workspace:*",
     "@summa/embeddings": "workspace:*",
     "@summa/shared": "workspace:*",
     "@summa/slides": "workspace:*",
