@@ -49,6 +49,19 @@ const connection = new IORedis(process.env.REDIS_URL ?? "redis://127.0.0.1:6379"
 const transcribeQueue = new Queue("transcribe", { connection });
 const summarizeQueue = new Queue("summarize", { connection });
 
+/** Root - API Info */
+app.get("/", async () => ({
+  name: "Summa AI API",
+  version: "1.0.0",
+  status: "running",
+  endpoints: {
+    health: "/health",
+    lectures: "/lectures",
+    slides: "/slides",
+    summary: "/summary"
+  }
+}));
+
 /** Health */
 app.get("/health", async () => ({ ok: true }));
 
