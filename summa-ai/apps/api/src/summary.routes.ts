@@ -1,11 +1,11 @@
 import type { FastifyInstance } from "fastify";
 import { ApiResponse, SummaryItem as SummaryItemSchema } from "@summa/shared";
 import type { SummaryReport as SummaryReportType } from "@summa/shared";
-import { mem } from "./db";
-import { listDecksByLecture } from "./db_slides";
-import { getParagraphs, getAlignments } from "./db_transcript";
+import { mem } from "./db.js";
+import { listDecksByLecture } from "./db_slides.js";
+import { getParagraphs, getAlignments } from "./db_transcript.js";
 import { summarizeWithEvidence } from "@summa/summarizer";
-import { saveSummary, getSummary } from "./db_summary";
+import { saveSummary, getSummary } from "./db_summary.js";
 
 export async function registerSummaryRoutes(app: FastifyInstance) {
   app.post("/sessions/:sid/summarize", async (req, reply) => {

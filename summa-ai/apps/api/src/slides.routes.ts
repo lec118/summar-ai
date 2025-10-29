@@ -3,7 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { extractPagesFromPDF } from "@summa/slides";
 import { embedTexts } from "@summa/embeddings";
-import { createDeck, listDecksByLecture, getDeck } from "./db_slides";
+import { createDeck, listDecksByLecture, getDeck } from "./db_slides.js";
 import { ApiResponse } from "@summa/shared";
 
 export async function registerSlidesRoutes(app: FastifyInstance) {

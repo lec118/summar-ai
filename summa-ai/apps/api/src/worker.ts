@@ -2,8 +2,8 @@ import { Worker, Job } from "bullmq";
 import IORedis from "ioredis";
 import fs from "node:fs";
 import { getSTTAdapter } from "@summa/stt";
-import { mem } from "./db";
-import { appendParagraph } from "./db_transcript";
+import { mem } from "./db.js";
+import { appendParagraph } from "./db_transcript.js";
 import { randomUUID } from "crypto";
 import { TranscribeJobSchema, SummarizeJobSchema } from "@summa/shared";
 

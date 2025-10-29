@@ -9,12 +9,12 @@ import {
   ApiResponse,
   RouteParamsSchemas
 } from "@summa/shared";
-import { createLecture, createSession, mem, patchSession, getSegments, deleteSession } from "./db";
-import { registerTus } from "./upload";
-import { registerSlidesRoutes } from "./slides.routes";
-import { registerAlignRoutes } from "./align.routes";
-import { registerSummaryRoutes } from "./summary.routes";
-import { getParagraphs } from "./db_transcript";
+import { createLecture, createSession, mem, patchSession, getSegments, deleteSession } from "./db.js";
+import { registerTus } from "./upload.js";
+import { registerSlidesRoutes } from "./slides.routes.js";
+import { registerAlignRoutes } from "./align.routes.js";
+import { registerSummaryRoutes } from "./summary.routes.js";
+import { getParagraphs } from "./db_transcript.js";
 import { Queue } from "bullmq";
 import IORedis from "ioredis";
 

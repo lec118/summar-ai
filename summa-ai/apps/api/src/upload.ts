@@ -1,6 +1,6 @@
 import type { FastifyInstance } from "fastify";
 import { ApiResponse, RouteParamsSchemas, FileValidators } from "@summa/shared";
-import { registerSegment } from "./db";
+import { registerSegment } from "./db.js";
 import fs from "node:fs";
 import path from "node:path";
 import { pipeline } from "node:stream/promises";

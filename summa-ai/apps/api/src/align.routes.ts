@@ -8,7 +8,7 @@ import {
   getParagraphs,
   saveAlignments,
   saveParagraphs
-} from "./db_transcript";
+} from "./db_transcript.js";
 
 const AlignPayload = z.object({
   paragraphs: z.array(ParagraphSchema).default([]),
