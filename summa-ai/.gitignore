@@ -38,5 +38,6 @@ dump.rdb
 uploads/
 audio/
 sessions/
+!apps/web/app/sessions/
 
 .vercel
