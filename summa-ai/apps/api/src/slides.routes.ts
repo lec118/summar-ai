@@ -13,10 +13,14 @@ export async function registerSlidesRoutes(app: FastifyInstance) {
     const mp = await req.file();
     if (!mp) return reply.code(400).send({ ok:false, error:"missing file" });
 
-    const lectureIdField = mp.fields.lectureId;
-    const titleField = mp.fields.title;
-    const lectureId = (Array.isArray(lectureIdField) ? lectureIdField[0]?.value : lectureIdField?.value) as string ?? "";
-    const title = (Array.isArray(titleField) ? titleField[0]?.value : titleField?.value) as string ?? mp.filename ?? "Slides";
+    const getLectureIdField = mp.fields.lectureId;
+    const lectureIdValue = Array.isArray(getLectureIdField) ? getLectureIdField[0] : getLectureIdField;
+    const lectureId = (lectureIdValue && typeof lectureIdValue === 'object' && 'value' in lectureIdValue ? String(lectureIdValue.value) : "") || "";
+
+    const getTitleField = mp.fields.title;
+    const titleValue = Array.isArray(getTitleField) ? getTitleField[0] : getTitleField;
+    const title = (titleValue && typeof titleValue === 'object' && 'value' in titleValue ? String(titleValue.value) : mp.filename) || "Slides";
+
     if (!lectureId) return reply.code(400).send({ ok:false, error:"missing lectureId" });
 
     const uploadDir = path.join(process.cwd(), "uploads", "slides");

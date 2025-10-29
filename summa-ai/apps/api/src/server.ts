@@ -86,7 +86,7 @@ app.post("/lectures/:id/sessions", async (req, reply) => {
   const body = CreateSessionDTO.safeParse(req.body ?? {});
   if (!body.success) return reply.code(400).send({ ok: false, error: body.error });
 
-  const sess = createSession(id, { mode: body.data.mode, policy: body.data.policy });
+  const sess = createSession(id, body.data as any);
   return ApiResponse(sess);
 });
 
@@ -118,7 +118,7 @@ app.patch("/lectures/:id/sessions/:sid", async (req, reply) => {
   const body = PatchSessionDTO.safeParse(req.body ?? {});
   if (!body.success) return reply.code(400).send({ ok: false, error: body.error });
 
-  const updated = patchSession(id, sid, body.data);
+  const updated = patchSession(id, sid, body.data as any);
   if (!updated) return reply.code(404).send({ ok: false, error: "session not found" });
   return ApiResponse(updated);
 });
