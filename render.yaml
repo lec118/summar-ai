@@ -17,7 +17,7 @@ services:
           name: summa-api
           envVarKey: RENDER_EXTERNAL_URL
 
-  # Fastify API Server
+  # Fastify API Server + Worker (combined for free plan)
   - type: web
     name: summa-api
     runtime: node
@@ -25,7 +25,7 @@ services:
     plan: free
     rootDir: summa-ai
     buildCommand: pnpm install && pnpm -r build
-    startCommand: cd apps/api && pnpm start
+    startCommand: cd apps/api && pnpm start:all
     envVars:
       - key: NODE_VERSION
         value: 18
@@ -50,33 +50,6 @@ services:
           type: web
           name: summa-web
           envVarKey: RENDER_EXTERNAL_URL
-
-  # Worker Service (Background Jobs)
-  - type: worker
-    name: summa-worker
-    runtime: node
-    region: oregon
-    plan: free
-    rootDir: summa-ai
-    buildCommand: pnpm install && pnpm -r build
-    startCommand: cd apps/api && pnpm start:worker
-    envVars:
-      - key: NODE_VERSION
-        value: 18
-      - key: REDIS_URL
-        fromDatabase:
-          name: summa-redis
-          property: connectionString
-      - key: OPENAI_API_KEY
-        sync: false
-      - key: OPENAI_STT_MODEL
-        value: whisper-1
-      - key: OPENAI_EMBEDDING_MODEL
-        value: text-embedding-3-large
-      - key: SUMM_LLM
-        value: openai
-      - key: SUMM_OPENAI_MODEL
-        value: gpt-4-turbo
 
 databases:
   # Redis for job queues
