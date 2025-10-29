@@ -17,6 +17,6 @@ export async function embedTexts(texts: string[], model = process.env.OPENAI_EMB
     const t = await res.text();
     throw new Error(`Embeddings error: ${res.status} ${t}`);
   }
-  const data = await res.json();
-  return data.data.map((d: any) => ({ vector: d.embedding, model: data.model }));
+  const data = await res.json() as { data: Array<{ embedding: number[] }>; model: string };
+  return data.data.map((d) => ({ vector: d.embedding, model: data.model }));
 }
