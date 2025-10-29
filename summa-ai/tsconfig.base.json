@@ -8,6 +8,7 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "resolveJsonModule": true,
+    "types": ["node"],
     "baseUrl": ".",
     "paths": {
       "@summa/shared/*": ["packages/shared/src/*"]
