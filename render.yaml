@@ -5,12 +5,11 @@ services:
     runtime: node
     region: oregon
     plan: free
-    rootDir: summa-ai
-    buildCommand: pnpm install && pnpm -r build
-    startCommand: cd apps/web && pnpm start
+    buildCommand: cd summa-ai && corepack enable && corepack prepare pnpm@latest --activate && pnpm install && pnpm -r build
+    startCommand: cd summa-ai/apps/web && pnpm start
     envVars:
       - key: NODE_VERSION
-        value: 18
+        value: 20
       - key: NEXT_PUBLIC_API_URL
         fromService:
           type: web
@@ -23,12 +22,11 @@ services:
     runtime: node
     region: oregon
     plan: free
-    rootDir: summa-ai
-    buildCommand: pnpm install && pnpm -r build
-    startCommand: cd apps/api && pnpm start:all
+    buildCommand: cd summa-ai && corepack enable && corepack prepare pnpm@latest --activate && pnpm install && pnpm -r build
+    startCommand: cd summa-ai/apps/api && pnpm start:all
     envVars:
       - key: NODE_VERSION
-        value: 18
+        value: 20
       - key: PORT
         value: 10000
       - key: REDIS_URL
