@@ -20,7 +20,7 @@ import IORedis from "ioredis";
 
 const app = Fastify({ logger: true });
 
-// CORS configuration - only allow specific origins
+// CORS configuration - allow localhost and vercel domains
 const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') || [
   'http://localhost:3000',
   'http://localhost:3001'
@@ -28,11 +28,25 @@ const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') || [
 
 await app.register(cors, {
   origin: (origin, cb) => {
-    if (!origin || allowedOrigins.includes(origin)) {
+    // Allow requests with no origin (like mobile apps or curl)
+    if (!origin) {
       cb(null, true);
-    } else {
-      cb(new Error('Not allowed by CORS'), false);
+      return;
     }
+
+    // Allow if in allowedOrigins list
+    if (allowedOrigins.includes(origin)) {
+      cb(null, true);
+      return;
+    }
+
+    // Allow all vercel.app domains
+    if (origin.endsWith('.vercel.app')) {
+      cb(null, true);
+      return;
+    }
+
+    cb(new Error('Not allowed by CORS'), false);
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH']
