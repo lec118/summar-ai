@@ -1,20 +1,22 @@
 import type { FastifyInstance } from "fastify";
 import fs from "node:fs";
 import path from "node:path";
-import { extractPagesFromPDF, extractPagesWithVision } from "@summa/slides";
+import { extractPagesFromPDF } from "@summa/slides";
 import { embedTexts } from "@summa/embeddings";
 import { createDeck, listDecksByLecture, getDeck } from "./db_slides";
 import { ApiResponse } from "@summa/shared";
 
 export async function registerSlidesRoutes(app: FastifyInstance) {
 
-  // ���ε�: PDF �� ������ �ؽ�Ʈ �� �Ӻ��� �� Deck ����
+  // Upload PDF and extract text + embeddings -> create Deck
   app.post("/slides/upload", async (req, reply) => {
     const mp = await req.file();
     if (!mp) return reply.code(400).send({ ok:false, error:"missing file" });
 
-    const lectureId = (mp.fields.lectureId?.value as string) ?? "";
-    const title = (mp.fields.title?.value as string) ?? mp.filename ?? "Slides";
+    const lectureIdField = mp.fields.lectureId;
+    const titleField = mp.fields.title;
+    const lectureId = (Array.isArray(lectureIdField) ? lectureIdField[0]?.value : lectureIdField?.value) as string ?? "";
+    const title = (Array.isArray(titleField) ? titleField[0]?.value : titleField?.value) as string ?? mp.filename ?? "Slides";
     if (!lectureId) return reply.code(400).send({ ok:false, error:"missing lectureId" });
 
     const uploadDir = path.join(process.cwd(), "uploads", "slides");
@@ -22,31 +24,17 @@ export async function registerSlidesRoutes(app: FastifyInstance) {
     const fpath = path.join(uploadDir, `${Date.now()}_${mp.filename}`);
     await fs.promises.writeFile(fpath, await mp.toBuffer());
 
-    // Vision API 사용 여부 확인 (환경변수로 제어)
-    const useVision = process.env.USE_VISION === "true";
+    // Use text-only extraction (Vision API temporarily disabled)
+    console.log("[Slides Upload] Using text-only extraction...");
+    const pages = await extractPagesFromPDF(fpath);
 
-    let pages;
-    if (useVision) {
-      console.log("[Slides Upload] Using Vision API for enhanced analysis...");
-      pages = await extractPagesWithVision(fpath);
-    } else {
-      console.log("[Slides Upload] Using text-only extraction...");
-      pages = await extractPagesFromPDF(fpath);
-    }
+    // Trim text to 4000 chars per page
+    const trimmed = pages.map((p: any) => ({
+      page: p.page,
+      text: (p.text ?? "").slice(0, 4000)
+    }));
 
-    // Vision 분석 결과가 있으면 텍스트와 결합
-    const trimmed = pages.map(p => {
-      let combinedText = p.text ?? "";
-      if ('visionAnalysis' in p && p.visionAnalysis) {
-        combinedText += `\n\n[Vision 분석]: ${p.visionAnalysis}`;
-      }
-      return {
-        page: p.page,
-        text: combinedText.slice(0, 6000)  // Vision 때문에 더 긴 텍스트
-      };
-    });
-
-    const vectors = await embedTexts(trimmed.map(p => p.text));
+    const vectors = await embedTexts(trimmed.map((p: any) => p.text));
 
     const deck = createDeck(lectureId, title, trimmed.map((p, i) => ({
       page: p.page,
