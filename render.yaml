@@ -5,8 +5,9 @@ services:
     runtime: node
     region: oregon
     plan: free
-    buildCommand: cd summa-ai && corepack enable && corepack prepare pnpm@latest --activate && pnpm install && pnpm -r build
-    startCommand: cd summa-ai/apps/web && pnpm start
+    rootDir: summa-ai
+    buildCommand: corepack enable && corepack prepare pnpm@latest --activate && pnpm install && pnpm -r build
+    startCommand: cd apps/web && pnpm start
     envVars:
       - key: NODE_VERSION
         value: 20
@@ -22,8 +23,9 @@ services:
     runtime: node
     region: oregon
     plan: free
-    buildCommand: cd summa-ai && corepack enable && corepack prepare pnpm@latest --activate && pnpm install && pnpm -r build
-    startCommand: cd summa-ai/apps/api && pnpm start:all
+    rootDir: summa-ai
+    buildCommand: corepack enable && corepack prepare pnpm@latest --activate && pnpm install && pnpm -r build
+    startCommand: cd apps/api && pnpm start:all
     envVars:
       - key: NODE_VERSION
         value: 20
