@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "next dev -p 3000",
-    "build": "next build",
+    "build": "cd ../.. && pnpm --filter @summa/shared build && cd apps/web && next build",
     "start": "next start -p 3000",
     "lint": "eslint .",
     "test": "vitest run"
@@ -14,7 +14,8 @@
     "next": "14.2.7",
     "react": "18.3.1",
     "react-dom": "18.3.1",
-    "zod": "^3.23.8"
+    "zod": "^3.23.8",
+    "@summa/shared": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^20.12.12",
