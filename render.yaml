@@ -30,9 +30,7 @@ services:
       - key: PORT
         value: 10000
       - key: REDIS_URL
-        fromDatabase:
-          name: summa-redis
-          property: connectionString
+        sync: false
       - key: OPENAI_API_KEY
         sync: false
       - key: OPENAI_STT_MODEL
@@ -45,11 +43,3 @@ services:
         value: gpt-4-turbo
       - key: ALLOWED_ORIGINS
         value: https://summa-ai-eight.vercel.app,http://localhost:3000,http://localhost:3001
-
-databases:
-  # Redis for job queues
-  - name: summa-redis
-    region: oregon
-    plan: free
-    databaseName: summa
-    user: summa
