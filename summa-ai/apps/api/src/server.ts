@@ -138,6 +138,19 @@ app.get("/lectures/:id/sessions", async (req, reply) => {
   return ApiResponse(mem.sessions.get(id) ?? []);
 });
 
+/** Get single session by ID */
+app.get("/sessions/:sid", async (req, reply) => {
+  const params = RouteParamsSchemas.sessionId.safeParse(req.params);
+  if (!params.success) return reply.code(400).send({ ok: false, error: "Invalid session ID" });
+
+  const { sid } = params.data;
+  const context = findSessionById(sid);
+  if (!context) {
+    return reply.code(404).send({ ok: false, error: "session not found" });
+  }
+  return ApiResponse(context.session);
+});
+
 /** Get segments */
 app.get("/sessions/:sid/segments", async (req, reply) => {
   const params = RouteParamsSchemas.sessionId.safeParse(req.params);
