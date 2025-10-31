@@ -42,9 +42,11 @@ export default function Home() {
     setRecordingCompleted(false);
     setFileUploaded(false);
 
+    const lectureId = activeLecture.id;
+
     async function fetchSessions() {
       try {
-        const data = await apiRequest<Session[]>(`/lectures/${activeLecture.id}/sessions`);
+        const data = await apiRequest<Session[]>(`/lectures/${lectureId}/sessions`);
         setSessions(data);
       } catch (err) {
         console.error("Failed to fetch sessions:", err);
