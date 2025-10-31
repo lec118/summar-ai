@@ -451,7 +451,51 @@ export default function SessionDetailPage({
             >
               ⏳
             </div>
-            <p style={{ fontSize: 18, fontWeight: 600 }}>변환 중...</p>
+            <p style={{ fontSize: 18, fontWeight: 600, marginBottom: 24 }}>변환 중...</p>
+
+            {/* Progress Bar */}
+            <div style={{ maxWidth: 600, margin: "0 auto 24px" }}>
+              <div
+                style={{
+                  width: "100%",
+                  height: 8,
+                  background: "#12183a",
+                  borderRadius: 8,
+                  overflow: "hidden",
+                  position: "relative",
+                }}
+              >
+                <div
+                  style={{
+                    height: "100%",
+                    background: "linear-gradient(90deg, #5865f2, #7289da)",
+                    borderRadius: 8,
+                    animation: "progressAnimation 2s ease-in-out infinite",
+                    width: "100%",
+                  }}
+                />
+              </div>
+
+              {/* Process Steps */}
+              <div style={{ marginTop: 16, fontSize: 14 }}>
+                <ProcessStep
+                  icon="🎵"
+                  text="오디오 파일 분석 중..."
+                  completed={false}
+                />
+                <ProcessStep
+                  icon="🗣️"
+                  text="음성을 텍스트로 변환 중..."
+                  completed={false}
+                />
+                <ProcessStep
+                  icon="📝"
+                  text="문단 구조화 및 최적화 중..."
+                  completed={false}
+                />
+              </div>
+            </div>
+
             <p style={{ opacity: 0.7, fontSize: 14, marginTop: 8 }}>
               음성을 텍스트로 변환하고 있습니다. 잠시만 기다려주세요.
             </p>
@@ -680,12 +724,52 @@ export default function SessionDetailPage({
             opacity: 0.5;
           }
         }
+
+        @keyframes progressAnimation {
+          0% {
+            transform: translateX(-100%);
+            opacity: 0.5;
+          }
+          50% {
+            opacity: 1;
+          }
+          100% {
+            transform: translateX(100%);
+            opacity: 0.5;
+          }
+        }
       `}</style>
     </main>
   );
 }
 
 // Helper Components
+function ProcessStep({
+  icon,
+  text,
+  completed,
+}: {
+  icon: string;
+  text: string;
+  completed: boolean;
+}) {
+  return (
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 12,
+        padding: "8px 0",
+        opacity: completed ? 0.5 : 1,
+      }}
+    >
+      <span style={{ fontSize: 20 }}>{icon}</span>
+      <span style={{ opacity: 0.8 }}>{text}</span>
+      {completed && <span style={{ marginLeft: "auto", color: "#27ae60" }}>✓</span>}
+    </div>
+  );
+}
+
 function StepCard({
   number,
   title,

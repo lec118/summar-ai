@@ -1,14 +1,8 @@
-import { STTAdapter, STTResult } from "./types.js";
+ï»¿import { STTAdapter, STTResult } from "./types.js";
 import { fileFromPath } from "formdata-node/file-from-path";
 import { FormData } from "formdata-node";
 import fetch from "node-fetch";
 
-/**
- * OpenAI Whisper API (hosted) ¾î´ðÅÍ ¿¹½Ã
- * env:
- *  - OPENAI_API_KEY
- *  - OPENAI_STT_MODEL (e.g., "whisper-1")
- */
 export class OpenAIWhisperAdapter implements STTAdapter {
   async transcribeFile({ filePath, language, prompt }: { filePath: string; language?: string; prompt?: string; }): Promise<STTResult> {
     const apiKey = process.env.OPENAI_API_KEY!;
@@ -24,11 +18,17 @@ export class OpenAIWhisperAdapter implements STTAdapter {
       headers: { Authorization: `Bearer ${apiKey}` },
       body: fd as any
     });
+
     if (!res.ok) {
       const t = await res.text();
       throw new Error(`OpenAI STT error: ${res.status} ${t}`);
     }
-    const data = await res.json();
-    return { text: data.text ?? "", language: data.language, confidence: undefined };
+
+    const data = (await res.json()) as { text?: string; language?: string };
+    return {
+      text: data.text ?? "",
+      language: data.language,
+      confidence: undefined
+    };
   }
 }

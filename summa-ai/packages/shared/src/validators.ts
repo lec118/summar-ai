@@ -68,7 +68,8 @@ export const FileValidators = {
 export const TranscribeJobSchema = z.object({
   segmentId: UUIDSchema,
   sessionId: UUIDSchema,
-  lectureId: UUIDSchema
+  lectureId: UUIDSchema,
+  localPath: z.string().min(1)
 });
 
 export const SummarizeJobSchema = z.object({

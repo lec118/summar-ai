@@ -1,4 +1,4 @@
-import fetch from "node-fetch";
+﻿import fetch from "node-fetch";
 
 export interface LLMAdapter {
   summarize(payload: {
@@ -13,7 +13,7 @@ export class OpenAILLM implements LLMAdapter {
     const m = model ?? process.env.SUMM_OPENAI_MODEL ?? "gpt-5-turbo";
     const res = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
-      headers: { "Authorization": `Bearer ${apiKey}`, "Content-Type": "application/json" },
+      headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
       body: JSON.stringify({
         model: m,
         messages: [
@@ -23,9 +23,16 @@ export class OpenAILLM implements LLMAdapter {
         temperature: 0.2
       })
     });
-    if (!res.ok) throw new Error(`OpenAI summarize error ${res.status}: ${await res.text()}`);
-    const data = await res.json();
-    return data.choices[0].message.content;
+
+    if (!res.ok) {
+      throw new Error(`OpenAI summarize error ${res.status}: ${await res.text()}`);
+    }
+
+    const data = (await res.json()) as {
+      choices: Array<{ message?: { content?: string } }>;
+    };
+
+    return data.choices[0]?.message?.content ?? "";
   }
 }
 
@@ -48,14 +55,23 @@ export class AnthropicLLM implements LLMAdapter {
         messages: [{ role: "user", content: prompt }]
       })
     });
-    if (!res.ok) throw new Error(`Anthropic summarize error ${res.status}: ${await res.text()}`);
-    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(`Anthropic summarize error ${res.status}: ${await res.text()}`);
+    }
+
+    const data = (await res.json()) as {
+      content?: Array<{ text?: string }>;
+    };
+
     return data.content?.[0]?.text ?? "";
   }
 }
 
 export function getLLM(): LLMAdapter {
-  const p = (process.env.SUMM_LLM ?? "openai").toLowerCase();
-  if (p === "anthropic") return new AnthropicLLM();
+  const provider = (process.env.SUMM_LLM ?? "openai").toLowerCase();
+  if (provider === "anthropic") {
+    return new AnthropicLLM();
+  }
   return new OpenAILLM();
 }

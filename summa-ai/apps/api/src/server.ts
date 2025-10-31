@@ -7,14 +7,25 @@ import {
   CreateSessionDTO,
   PatchSessionDTO,
   ApiResponse,
-  RouteParamsSchemas
+  RouteParamsSchemas,
+  TranscriptionResultSchema
 } from "@summa/shared";
-import { createLecture, createSession, mem, patchSession, getSegments, deleteSession } from "./db.js";
+import {
+  createLecture,
+  createSession,
+  mem,
+  patchSession,
+  getSegments,
+  deleteSession,
+  findSessionById,
+  markProcessingJobs,
+  resolveProcessingJob
+} from "./db.js";
 import { registerTus } from "./upload.js";
 import { registerSlidesRoutes } from "./slides.routes.js";
 import { registerAlignRoutes } from "./align.routes.js";
 import { registerSummaryRoutes } from "./summary.routes.js";
-import { getParagraphs } from "./db_transcript.js";
+import { appendParagraphs, getParagraphs } from "./db_transcript.js";
 import { Queue } from "bullmq";
 import IORedis from "ioredis";
 
@@ -168,20 +179,11 @@ app.post("/sessions/:sid/ingest", async (req, reply) => {
 
   const { sid } = params.data;
 
-  let session = null;
-  let lectureId = null;
-  for (const [lecId, list] of mem.sessions.entries()) {
-    const s = list.find(x => x.id === sid);
-    if (s) {
-      session = s;
-      lectureId = lecId;
-      break;
-    }
-  }
-
-  if (!session) {
+  const context = findSessionById(sid);
+  if (!context) {
     return reply.code(404).send({ ok: false, error: "session not found" });
   }
+  const { lectureId, session } = context;
 
   const segments = getSegments(sid);
   if (segments.length === 0) {
@@ -189,6 +191,7 @@ app.post("/sessions/:sid/ingest", async (req, reply) => {
   }
 
   session.status = "processing";
+  markProcessingJobs(sid, segments.length);
 
   // Queue transcription jobs for all segments
   const jobs = [];
@@ -196,7 +199,8 @@ app.post("/sessions/:sid/ingest", async (req, reply) => {
     const job = await transcribeQueue.add("transcribe", {
       segmentId: seg.id,
       sessionId: sid,
-      lectureId
+      lectureId,
+      localPath: seg.localPath
     });
     jobs.push(job.id);
   }
@@ -217,6 +221,33 @@ app.get("/sessions/:sid/transcript", async (req, reply) => {
   const { sid } = params.data;
   const paragraphs = getParagraphs(sid);
   return ApiResponse({ paragraphs });
+});
+
+/** Worker callback: append transcript paragraphs and update status */
+app.post("/sessions/:sid/transcription-result", async (req, reply) => {
+  const params = RouteParamsSchemas.sessionId.safeParse(req.params);
+  if (!params.success) {
+    return reply.code(400).send({ ok: false, error: "Invalid session ID" });
+  }
+
+  const body = TranscriptionResultSchema.safeParse(req.body ?? {});
+  if (!body.success) {
+    return reply
+      .code(400)
+      .send({ ok: false, error: body.error.message });
+  }
+
+  const { sid } = params.data;
+
+  if (body.data.paragraphs.length > 0) {
+    appendParagraphs(sid, body.data.paragraphs);
+  }
+
+  const remainingJobs = resolveProcessingJob(sid);
+
+  return ApiResponse({
+    remainingJobs
+  });
 });
 
 /** Status */

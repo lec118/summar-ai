@@ -11,7 +11,16 @@
     "types": ["node"],
     "baseUrl": ".",
     "paths": {
-      "@summa/shared/*": ["packages/shared/src/*"]
+      "@summa/shared": ["packages/shared/src/index.ts"],
+      "@summa/shared/*": ["packages/shared/src/*"],
+      "@summa/slides": ["packages/slides/src/index.ts"],
+      "@summa/slides/*": ["packages/slides/src/*"],
+      "@summa/embeddings": ["packages/embeddings/src/index.ts"],
+      "@summa/embeddings/*": ["packages/embeddings/src/*"],
+      "@summa/stt": ["packages/stt/src/index.ts"],
+      "@summa/stt/*": ["packages/stt/src/*"],
+      "@summa/summarizer": ["packages/summarizer/src/index.ts"],
+      "@summa/summarizer/*": ["packages/summarizer/src/*"]
     }
   }
 }

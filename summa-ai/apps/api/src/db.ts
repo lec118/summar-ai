@@ -14,6 +14,8 @@ export const mem = {
   segments: new Map<string, SessionSegment[]>(), // key: sessionId
 };
 
+const processingJobs = new Map<string, number>(); // key: sessionId -> remaining jobs
+
 export function createLecture(title: string): Lecture {
   const lec = { id: randomUUID(), title, createdAt: Date.now() } as Lecture;
   mem.lectures.set(lec.id, lec);
@@ -51,6 +53,12 @@ export function registerSegment(sessionId: string, segment: Omit<SessionSegment,
   };
   segs.push(next);
   mem.segments.set(sessionId, segs);
+
+  const context = findSessionById(sessionId);
+  if (context && context.session.status !== "processing" && context.session.status !== "completed") {
+    context.session.status = "uploaded";
+  }
+
   return next;
 }
 
@@ -89,4 +97,43 @@ export function deleteSession(lectureId: string, sid: string): boolean {
   mem.segments.delete(sid);
 
   return true;
+}
+
+export function findSessionById(sessionId: string):
+  | { lectureId: string; session: Session }
+  | null {
+  for (const [lectureId, list] of mem.sessions.entries()) {
+    const session = list.find((s) => s.id === sessionId);
+    if (session) {
+      return { lectureId, session };
+    }
+  }
+  return null;
+}
+
+export function markProcessingJobs(sessionId: string, jobCount: number) {
+  processingJobs.set(sessionId, jobCount);
+}
+
+export function resolveProcessingJob(sessionId: string): number {
+  if (!processingJobs.has(sessionId)) {
+    const context = findSessionById(sessionId);
+    if (context) {
+      context.session.status = "completed";
+    }
+    return 0;
+  }
+
+  const remaining = (processingJobs.get(sessionId) ?? 0) - 1;
+  if (remaining <= 0) {
+    processingJobs.delete(sessionId);
+    const context = findSessionById(sessionId);
+    if (context) {
+      context.session.status = "completed";
+    }
+    return 0;
+  }
+
+  processingJobs.set(sessionId, remaining);
+  return remaining;
 }

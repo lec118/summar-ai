@@ -1,11 +1,6 @@
+import type { TranscriptParagraph } from "@summa/shared";
+import { TranscriptParagraphSchema } from "@summa/shared";
 import { z } from "zod";
-
-export type TranscriptParagraph = {
-  id: string;
-  text: string;
-  startMs?: number;
-  endMs?: number;
-};
 
 export type AlignmentRecord = {
   paraId: string;
@@ -39,12 +34,7 @@ export function getAlignments(sessionId: string): AlignmentRecord[] {
   return [...(alignments.get(sessionId) ?? [])];
 }
 
-export const ParagraphSchema = z.object({
-  id: z.string(),
-  text: z.string(),
-  startMs: z.number().int().nonnegative().optional(),
-  endMs: z.number().int().nonnegative().optional()
-});
+export const ParagraphSchema = TranscriptParagraphSchema;
 
 export const AlignmentSchema = z.object({
   paraId: z.string(),
@@ -52,3 +42,9 @@ export const AlignmentSchema = z.object({
   deckId: z.string(),
   score: z.number().min(0).max(1)
 });
+
+export function appendParagraphs(sessionId: string, items: TranscriptParagraph[]) {
+  for (const item of items) {
+    appendParagraph(sessionId, item);
+  }
+}

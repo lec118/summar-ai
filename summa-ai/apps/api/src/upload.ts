@@ -5,8 +5,32 @@ import fs from "node:fs";
 import path from "node:path";
 import { pipeline } from "node:stream/promises";
 import { randomUUID } from "crypto";
+import { Transform } from "node:stream";
 
 const UPLOAD_DIR = path.join(process.cwd(), "uploads");
+const MAX_FILE_MB = 500;
+const MAX_FILE_BYTES = MAX_FILE_MB * 1024 * 1024;
+
+class FileTooLargeError extends Error {
+  constructor(limitMb: number) {
+    super(`File size exceeds ${limitMb}MB limit`);
+    this.name = "FileTooLargeError";
+  }
+}
+
+function createSizeGuard(limitBytes: number) {
+  let total = 0;
+  return new Transform({
+    transform(chunk, _encoding, callback) {
+      total += chunk.length;
+      if (total > limitBytes) {
+        callback(new FileTooLargeError(limitBytes / (1024 * 1024)));
+        return;
+      }
+      callback(null, chunk);
+    }
+  });
+}
 
 export async function registerTus(app: FastifyInstance) {
   // Ensure upload directory exists
@@ -37,22 +61,17 @@ export async function registerTus(app: FastifyInstance) {
       });
     }
 
-    // Validate file size (500MB max)
-    const sizeValidation = FileValidators.validateFileSize(
-      data.file.bytesRead || 0,
-      500
-    );
-    if (!sizeValidation.valid) {
-      return reply.code(400).send({ ok: false, error: sizeValidation.error });
-    }
-
     const segmentId = randomUUID();
     const extension = data.mimetype.split('/')[1]?.replace('mpeg', 'mp3') || 'webm';
     const filename = `${sessionId}_${segmentId}_${Date.now()}.${extension}`;
     const localPath = path.join(UPLOAD_DIR, filename);
 
     try {
-      await pipeline(data.file, fs.createWriteStream(localPath));
+      await pipeline(
+        data.file,
+        createSizeGuard(MAX_FILE_BYTES),
+        fs.createWriteStream(localPath)
+      );
 
       const segment = registerSegment(sessionId, {
         id: segmentId,
@@ -67,6 +86,9 @@ export async function registerTus(app: FastifyInstance) {
       // Clean up partial file if it exists
       if (fs.existsSync(localPath)) {
         fs.unlinkSync(localPath);
+      }
+      if (err instanceof FileTooLargeError) {
+        return reply.code(400).send({ ok: false, error: err.message });
       }
       return reply.code(500).send({ ok: false, error: "Upload failed" });
     }
