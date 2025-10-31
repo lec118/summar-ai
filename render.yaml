@@ -44,10 +44,7 @@ services:
       - key: SUMM_OPENAI_MODEL
         value: gpt-4-turbo
       - key: ALLOWED_ORIGINS
-        fromService:
-          type: web
-          name: summa-web
-          envVarKey: RENDER_EXTERNAL_URL
+        value: https://summa-ai-eight.vercel.app,http://localhost:3000,http://localhost:3001
 
 databases:
   # Redis for job queues
