@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "worker": "tsx watch src/worker.ts",
-    "build": "tsc -p tsconfig.json",
+    "build": "tsup src/server.ts src/worker.ts --format esm --outDir dist --external @summa/shared --external @summa/slides --external @summa/embeddings --external @summa/stt --external @summa/summarizer",
     "start": "node dist/server.js",
     "start:worker": "node dist/worker.js",
     "start:all": "concurrently \"npm run start\" \"npm run start:worker\"",
@@ -34,6 +34,7 @@
   },
   "devDependencies": {
     "@types/node": "^22.8.1",
+    "tsup": "^8.5.0",
     "tsx": "^4.19.1",
     "typescript": "^5.6.3",
     "vitest": "^2.1.3"
