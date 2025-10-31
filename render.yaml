@@ -5,9 +5,8 @@ services:
     runtime: node
     region: oregon
     plan: free
-    rootDir: summa-ai
-    buildCommand: corepack enable && corepack prepare pnpm@latest --activate && pnpm install && pnpm --filter @summa/shared build && pnpm --filter @summa/web build
-    startCommand: cd apps/web && pnpm start
+    buildCommand: cd summa-ai && corepack enable && corepack prepare pnpm@latest --activate && pnpm install && pnpm --filter @summa/shared build && pnpm --filter @summa/web build
+    startCommand: cd summa-ai/apps/web && pnpm start
     envVars:
       - key: NODE_VERSION
         value: 20
@@ -23,9 +22,8 @@ services:
     runtime: node
     region: oregon
     plan: free
-    rootDir: summa-ai
-    buildCommand: corepack enable && corepack prepare pnpm@latest --activate && pnpm install && pnpm --filter @summa/shared build && pnpm --filter @summa/stt build && pnpm --filter @summa/embeddings build && pnpm --filter @summa/slides build && pnpm --filter @summa/summarizer build && pnpm --filter @summa/api build
-    startCommand: cd apps/api && pnpm start:all
+    buildCommand: cd summa-ai && corepack enable && corepack prepare pnpm@latest --activate && pnpm install && pnpm --filter @summa/shared build && pnpm --filter @summa/stt build && pnpm --filter @summa/embeddings build && pnpm --filter @summa/slides build && pnpm --filter @summa/summarizer build && pnpm --filter @summa/api build
+    startCommand: cd summa-ai/apps/api && pnpm start:all
     envVars:
       - key: NODE_VERSION
         value: 20
