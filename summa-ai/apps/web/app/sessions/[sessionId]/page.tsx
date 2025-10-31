@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { apiRequest, apiUpload } from "@/lib/api";
+import { apiRequest, apiUpload } from "../../../lib/api";
 
 type Session = {
   id: string;
@@ -9,7 +9,7 @@ type Session = {
   idx: number;
   mode: "manual" | "auto";
   policy: { lengthMin: number; overlapSec: number; vadPause: boolean };
-  status: "idle" | "recording" | "uploaded" | "processing" | "done" | "error";
+  status: "idle" | "recording" | "uploaded" | "processing" | "completed" | "error";
 };
 
 type Segment = {
@@ -112,7 +112,7 @@ export default function SessionDetailPage({
 
         // Fetch transcript if available
         if (
-          foundSession.status === "done" ||
+          foundSession.status === "completed" ||
           foundSession.status === "processing"
         ) {
           try {
@@ -314,7 +314,7 @@ export default function SessionDetailPage({
   }
 
   const isTranscriptReady =
-    session?.status === "done" || transcript.length > 0;
+    session?.status === "completed" || transcript.length > 0;
   const canStartTranscription = session?.status === "uploaded";
   const isTranscribing = session?.status === "processing";
 
@@ -806,11 +806,11 @@ function StatusBadge({ status }: { status: string }) {
     recording: { label: "녹음 중", color: "#e74c3c", bg: "#3d1f1f" },
     uploaded: { label: "업로드 완료", color: "#3498db", bg: "#1a2a3a" },
     processing: { label: "처리 중", color: "#f39c12", bg: "#3d2f1f" },
-    done: { label: "완료", color: "#27ae60", bg: "#1e4d2b" },
+    completed: { label: "완료", color: "#27ae60", bg: "#1e4d2b" },
     error: { label: "오류", color: "#e74c3c", bg: "#3d1f1f" },
   };
 
-  const config = statusConfig[status] || statusConfig.idle;
+  const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.idle;
 
   return (
     <span
