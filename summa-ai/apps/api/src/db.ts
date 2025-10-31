@@ -37,7 +37,8 @@ export function createSession(lectureId: string, partial: Partial<Session>): Ses
       overlapSec: partial.policy?.overlapSec ?? 5,
       vadPause: partial.policy?.vadPause ?? true
     },
-    status: "idle"
+    status: "idle",
+    createdAt: Date.now()
   };
   list.push(sess);
   mem.sessions.set(lectureId, list);

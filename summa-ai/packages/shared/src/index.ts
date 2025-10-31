@@ -24,7 +24,8 @@ export const Session = z.object({
   idx: z.number().int(),
   mode: SessionMode,
   policy: SegmentPolicy,
-  status: z.enum(["idle","recording","uploaded","processing","completed","error"]).default("idle")
+  status: z.enum(["idle","recording","uploaded","processing","completed","error"]).default("idle"),
+  createdAt: z.number()
 });
 export type Session = z.infer<typeof Session>;
 
