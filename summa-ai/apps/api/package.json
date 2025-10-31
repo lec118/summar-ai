@@ -21,6 +21,7 @@
     "@summa/summarizer": "workspace:*",
     "@summa/stt": "workspace:*",
     "bullmq": "^5.29.0",
+    "concurrently": "^9.1.0",
     "dotenv": "^16.4.5",
     "fastify": "^4.28.1",
     "@fastify/cors": "^9.0.0",
