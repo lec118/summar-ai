@@ -9,6 +9,7 @@
     "start": "node dist/server.js",
     "start:worker": "node dist/worker.js",
     "start:all": "concurrently \"npm run start\" \"npm run start:worker\"",
+    "start:prod": "npm run build && npm run start:all",
     "test": "vitest run",
     "lint": "eslint ."
   },

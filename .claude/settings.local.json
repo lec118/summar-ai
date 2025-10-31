@@ -46,7 +46,13 @@
       "Bash(git branch:*)",
       "Bash(git push:*)",
       "Bash(git reset:*)",
-      "Bash(git checkout:*)"
+      "Bash(git checkout:*)",
+      "Bash(vercel --version:*)",
+      "Bash(vercel --prod:*)",
+      "Bash(git ls-tree:*)",
+      "Bash(vercel env add:*)",
+      "Bash(vercel ls:*)",
+      "Bash(vercel inspect:*)"
     ],
     "deny": [],
     "ask": []
