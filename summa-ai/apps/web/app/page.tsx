@@ -1,20 +1,8 @@
 "use client";
 import { useEffect, useMemo, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
-
-type Lecture = { id: string; title: string; createdAt: number };
-type Session = {
-  id: string; lectureId: string; idx: number;
-  mode: "manual"|"auto";
-  policy: { lengthMin: number; overlapSec: number; vadPause: boolean };
-  status: string;
-  createdAt?: number;
-};
-
-const API = (path: string) => {
-  const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
-  return `${baseUrl}${path}`;
-};
+import { apiRequest, apiUpload, ApiError } from "../lib/api";
+import type { Lecture, Session } from "@summa/shared";
 
 export default function Home() {
   const router = useRouter();
@@ -33,11 +21,19 @@ export default function Home() {
   const [recordingCompleted, setRecordingCompleted] = useState(false);
   const [fileUploaded, setFileUploaded] = useState(false);
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch(API("/lectures"))
-      .then(r=>r.json())
-      .then(x=>setLectures(x.data??[]));
+    async function fetchLectures() {
+      try {
+        const data = await apiRequest<Lecture[]>("/lectures");
+        setLectures(data);
+      } catch (err) {
+        console.error("Failed to fetch lectures:", err);
+        setError(err instanceof ApiError ? err.message : "강의 목록을 불러올 수 없습니다.");
+      }
+    }
+    fetchLectures();
   }, []);
 
   useEffect(() => {
@@ -46,12 +42,18 @@ export default function Home() {
     setRecordingCompleted(false);
     setFileUploaded(false);
 
-    const f = () => fetch(API(`/lectures/${activeLecture.id}/sessions`))
-      .then(r=>r.json())
-      .then(x=>setSessions(x.data??[]));
-    f();
-    const t = setInterval(f, 1500);
-    return () => clearInterval(t);
+    async function fetchSessions() {
+      try {
+        const data = await apiRequest<Session[]>(`/lectures/${activeLecture.id}/sessions`);
+        setSessions(data);
+      } catch (err) {
+        console.error("Failed to fetch sessions:", err);
+      }
+    }
+
+    fetchSessions();
+    const interval = setInterval(fetchSessions, 3000); // Reduced polling frequency
+    return () => clearInterval(interval);
   }, [activeLecture]);
 
   const lecTitle = useMemo(() => activeLecture?.title ?? "?", [activeLecture]);
@@ -61,18 +63,27 @@ export default function Home() {
       alert("강의 제목을 입력해주세요.");
       return;
     }
-    setPending(true);
-    const res = await fetch(API("/lectures"), {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title: newLectureTitle.trim() })
-    });
-    const data = await res.json();
-    setLectures(prev => [data.data, ...prev]);
-    setActiveLecture(data.data);
-    setNewLectureTitle("");
-    setShowNewLectureForm(false);
-    setPending(false);
+
+    try {
+      setPending(true);
+      setError(null);
+
+      const lecture = await apiRequest<Lecture>("/lectures", {
+        method: "POST",
+        body: JSON.stringify({ title: newLectureTitle.trim() })
+      });
+
+      setLectures(prev => [lecture, ...prev]);
+      setActiveLecture(lecture);
+      setNewLectureTitle("");
+      setShowNewLectureForm(false);
+    } catch (err) {
+      console.error("Failed to create lecture:", err);
+      setError(err instanceof ApiError ? err.message : "강의 생성에 실패했습니다.");
+      alert(err instanceof ApiError ? err.message : "강의 생성에 실패했습니다.");
+    } finally {
+      setPending(false);
+    }
   }
 
   async function createSessionAndGetId(mode: "manual"|"auto"): Promise<string | null> {
@@ -80,14 +91,20 @@ export default function Home() {
       alert("먼저 강의를 선택하거나 생성하세요.");
       return null;
     }
-    const res = await fetch(API(`/lectures/${activeLecture.id}/sessions`), {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ mode, policy: { lengthMin: 55, overlapSec: 5, vadPause: true } })
-    });
-    const data = await res.json();
-    setSessions(prev => [...prev, data.data]);
-    return data.data.id;
+
+    try {
+      const session = await apiRequest<Session>(`/lectures/${activeLecture.id}/sessions`, {
+        method: "POST",
+        body: JSON.stringify({ mode, policy: { lengthMin: 55, overlapSec: 5, vadPause: true } })
+      });
+
+      setSessions(prev => [...prev, session]);
+      return session.id;
+    } catch (err) {
+      console.error("Failed to create session:", err);
+      alert(err instanceof ApiError ? err.message : "세션 생성에 실패했습니다.");
+      return null;
+    }
   }
 
   async function startRecording() {
@@ -120,17 +137,14 @@ export default function Home() {
         formData.append("file", blob, "recording.webm");
 
         try {
-          await fetch(API(`/sessions/${sessionId}/upload`), {
-            method: "POST",
-            body: formData
-          });
+          await apiUpload(`/sessions/${sessionId}/upload`, formData);
 
           // Mark as completed and store session ID
           setRecordingCompleted(true);
           setCurrentSessionId(sessionId);
         } catch (err) {
           console.error("Upload failed:", err);
-          alert("녹음 업로드에 실패했습니다.");
+          alert(err instanceof ApiError ? err.message : "녹음 업로드에 실패했습니다.");
         }
       };
 
@@ -191,10 +205,7 @@ export default function Home() {
     formData.append("file", file);
 
     try {
-      await fetch(API(`/sessions/${sessionId}/upload`), {
-        method: "POST",
-        body: formData
-      });
+      await apiUpload(`/sessions/${sessionId}/upload`, formData);
 
       setUploadingFile(false);
       setPending(false);
@@ -204,7 +215,7 @@ export default function Home() {
       setCurrentSessionId(sessionId);
     } catch (err) {
       console.error("Upload failed:", err);
-      alert("파일 업로드에 실패했습니다.");
+      alert(err instanceof ApiError ? err.message : "파일 업로드에 실패했습니다.");
       setUploadingFile(false);
       setPending(false);
     }
@@ -217,8 +228,14 @@ export default function Home() {
 
   async function deleteSessionHandler(s: Session) {
     if (!confirm("이 녹음을 삭제하시겠습니까?")) return;
-    await fetch(API(`/lectures/${s.lectureId}/sessions/${s.id}`), { method: "DELETE" });
-    setSessions(prev => prev.filter(x => x.id !== s.id));
+
+    try {
+      await apiRequest(`/lectures/${s.lectureId}/sessions/${s.id}`, { method: "DELETE" });
+      setSessions(prev => prev.filter(x => x.id !== s.id));
+    } catch (err) {
+      console.error("Failed to delete session:", err);
+      alert(err instanceof ApiError ? err.message : "세션 삭제에 실패했습니다.");
+    }
   }
 
   return (

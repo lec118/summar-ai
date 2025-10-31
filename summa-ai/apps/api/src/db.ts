@@ -12,6 +12,7 @@ export const mem = {
   lectures: new Map<string, Lecture>(),
   sessions: new Map<string, Session[]>(), // key: lectureId
   segments: new Map<string, SessionSegment[]>(), // key: sessionId
+  sessionIndex: new Map<string, { lectureId: string; session: Session }>(), // key: sessionId -> fast lookup
 };
 
 const processingJobs = new Map<string, number>(); // key: sessionId -> remaining jobs
@@ -41,6 +42,10 @@ export function createSession(lectureId: string, partial: Partial<Session>): Ses
   list.push(sess);
   mem.sessions.set(lectureId, list);
   mem.segments.set(sess.id, []);
+
+  // Add to index for O(1) lookup
+  mem.sessionIndex.set(sess.id, { lectureId, session: sess });
+
   return sess;
 }
 
@@ -81,6 +86,10 @@ export function patchSession(lectureId: string, sid: string, update: Partial<Ses
     }
   };
   list[i] = next;
+
+  // Update index
+  mem.sessionIndex.set(sid, { lectureId, session: next });
+
   return next;
 }
 
@@ -96,19 +105,17 @@ export function deleteSession(lectureId: string, sid: string): boolean {
   // Clean up segments
   mem.segments.delete(sid);
 
+  // Remove from index
+  mem.sessionIndex.delete(sid);
+
   return true;
 }
 
 export function findSessionById(sessionId: string):
   | { lectureId: string; session: Session }
   | null {
-  for (const [lectureId, list] of mem.sessions.entries()) {
-    const session = list.find((s) => s.id === sessionId);
-    if (session) {
-      return { lectureId, session };
-    }
-  }
-  return null;
+  // O(1) lookup using index instead of O(n*m) nested loop
+  return mem.sessionIndex.get(sessionId) ?? null;
 }
 
 export function markProcessingJobs(sessionId: string, jobCount: number) {
