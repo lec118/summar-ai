@@ -1,19 +1,23 @@
 ﻿import { Worker, Job } from "bullmq";
-import IORedis from "ioredis";
 import fs from "node:fs";
 import { getSTTAdapter } from "@summa/stt";
 import { randomUUID } from "crypto";
 import { TranscribeJobSchema, SummarizeJobSchema } from "@summa/shared";
+import { config, CONSTANTS } from "./config.js";
+import { createRedisConnection } from "./redis.js";
 
-const connection = new IORedis(
-  process.env.REDIS_URL ?? "redis://127.0.0.1:6379",
-  { maxRetriesPerRequest: null }
-);
+console.log("🔧 Starting Summa AI Worker...");
+
+const connection = createRedisConnection({
+  maxRetriesPerRequest: null
+});
 
 const API_BASE_URL =
-  process.env.API_INTERNAL_URL ??
-  process.env.API_URL ??
-  "http://127.0.0.1:4000";
+  config.API_INTERNAL_URL ??
+  config.API_URL ??
+  `http://127.0.0.1:${config.PORT}`;
+
+console.log(`📡 API Base URL: ${API_BASE_URL}`);
 
 async function sendTranscriptionResult(payload: {
   sessionId: string;
@@ -96,7 +100,10 @@ async function handleTranscribe(job: Job) {
     let currentTime = 0;
     const paragraphs = sentences.map((sentence) => {
       const paraId = randomUUID();
-      const duration = Math.max(2000, sentence.length * 50);
+      const duration = Math.max(
+        CONSTANTS.MIN_SENTENCE_DURATION,
+        sentence.length * CONSTANTS.CHAR_TO_MS_RATIO
+      );
       const payload = {
         id: paraId,
         text: sentence,
@@ -130,13 +137,21 @@ async function handleTranscribe(job: Job) {
   }
 }
 
-new Worker("transcribe", handleTranscribe, {
+const transcribeWorker = new Worker("transcribe", handleTranscribe, {
   connection,
-  concurrency: 5,
+  concurrency: CONSTANTS.TRANSCRIBE_CONCURRENCY,
   limiter: {
-    max: 10,
-    duration: 60000
+    max: CONSTANTS.TRANSCRIBE_RATE_LIMIT_MAX,
+    duration: CONSTANTS.TRANSCRIBE_RATE_LIMIT_DURATION
   }
+});
+
+transcribeWorker.on("completed", (job) => {
+  console.log(`✅ Transcribe job ${job.id} completed`);
+});
+
+transcribeWorker.on("failed", (job, err) => {
+  console.error(`❌ Transcribe job ${job?.id} failed:`, err.message);
 });
 
 async function handleSummarize(job: Job) {
@@ -163,11 +178,38 @@ async function handleSummarize(job: Job) {
   }
 }
 
-new Worker("summarize", handleSummarize, {
+const summarizeWorker = new Worker("summarize", handleSummarize, {
   connection,
-  concurrency: 3
+  concurrency: CONSTANTS.SUMMARIZE_CONCURRENCY
 });
 
-console.log("Workers running:");
-console.log("  - transcribe: Uses STT adapter with retry logic");
-console.log("  - summarize: Placeholder (TODO: Evidence RAG + summarize)");
+summarizeWorker.on("completed", (job) => {
+  console.log(`✅ Summarize job ${job.id} completed`);
+});
+
+summarizeWorker.on("failed", (job, err) => {
+  console.error(`❌ Summarize job ${job?.id} failed:`, err.message);
+});
+
+// Graceful shutdown
+async function gracefulShutdown(signal: string) {
+  console.log(`\n${signal} received. Shutting down workers...`);
+
+  try {
+    await transcribeWorker.close();
+    await summarizeWorker.close();
+    await connection.quit();
+    console.log("✅ Workers shut down gracefully");
+    process.exit(0);
+  } catch (error) {
+    console.error("❌ Error during worker shutdown:", error);
+    process.exit(1);
+  }
+}
+
+process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
+process.on("SIGINT", () => gracefulShutdown("SIGINT"));
+
+console.log("\n✅ Workers running:");
+console.log(`  - transcribe: Concurrency ${CONSTANTS.TRANSCRIBE_CONCURRENCY}, Rate limit ${CONSTANTS.TRANSCRIBE_RATE_LIMIT_MAX}/${CONSTANTS.TRANSCRIBE_RATE_LIMIT_DURATION}ms`);
+console.log(`  - summarize: Concurrency ${CONSTANTS.SUMMARIZE_CONCURRENCY} (placeholder)\n`);
