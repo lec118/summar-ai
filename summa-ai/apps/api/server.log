@@ -1,0 +1,8 @@
+
+> @summa/api@0.1.0 start C:\Users\Administrator\Desktop\Summa AI\summa-ai\apps\api
+> node dist/server.js
+
+{"level":30,"time":1761885230075,"pid":7120,"hostname":"I13020120000313","msg":"Server listening at http://0.0.0.0:4000"}
+API on http://localhost:4000
+{"level":30,"time":1761885230191,"pid":7120,"hostname":"I13020120000313","reqId":"req-1","req":{"method":"GET","url":"/","hostname":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":55256},"msg":"incoming request"}
+{"level":30,"time":1761885230207,"pid":7120,"hostname":"I13020120000313","reqId":"req-1","res":{"statusCode":200},"responseTime":13.956000000238419,"msg":"request completed"}
