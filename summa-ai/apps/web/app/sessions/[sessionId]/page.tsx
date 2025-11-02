@@ -185,7 +185,7 @@ export default function SessionDetailPage({
       } catch (err) {
         console.error("Error polling session status:", err);
       }
-    }, 2000);
+    }, 5000); // Poll every 5 seconds
 
     return () => clearInterval(interval);
   }, [session?.status, sessionId]);

@@ -54,7 +54,7 @@ export default function Home() {
     }
 
     fetchSessions();
-    const interval = setInterval(fetchSessions, 3000); // Reduced polling frequency
+    const interval = setInterval(fetchSessions, 5000); // Poll every 5 seconds
     return () => clearInterval(interval);
   }, [activeLecture]);
 
