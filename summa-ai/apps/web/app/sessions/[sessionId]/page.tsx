@@ -347,8 +347,8 @@ export default function SessionDetailPage({
         </div>
       </div>
 
-      {/* Error Display */}
-      {error && (
+      {/* Error Display - Only show critical errors, not "Bad Request" for missing summary */}
+      {error && !error.includes("Bad Request") && (
         <div
           style={{
             padding: 16,
