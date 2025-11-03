@@ -210,8 +210,11 @@ export default function SessionDetailPage({
         method: "POST",
       });
 
-      // Update session status
+      // Update session status - keep transcribing true to show progress
       setSession({ ...session, status: "processing" });
+
+      // Show success feedback
+      alert("✅ 텍스트 변환이 시작되었습니다!\n\n작업이 완료되면 페이지가 자동으로 업데이트됩니다.");
     } catch (err) {
       console.error("Failed to start transcription:", err);
       setError(
@@ -219,7 +222,6 @@ export default function SessionDetailPage({
           ? err.message
           : "텍스트 변환을 시작할 수 없습니다."
       );
-    } finally {
       setTranscribing(false);
     }
   }
