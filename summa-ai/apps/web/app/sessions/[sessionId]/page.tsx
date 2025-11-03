@@ -125,15 +125,17 @@ export default function SessionDetailPage({
           }
         }
 
-        // Fetch summary if available
-        try {
-          const summaryRes = await apiRequest<SummaryReport>(
-            `/sessions/${sessionId}/summary`
-          );
-          setSummary(summaryRes);
-        } catch (err) {
-          // Summary might not exist yet
-          console.log("No summary available yet");
+        // Fetch summary only if session is completed (summary is manually generated)
+        if (foundSession.status === "completed") {
+          try {
+            const summaryRes = await apiRequest<SummaryReport>(
+              `/sessions/${sessionId}/summary`
+            );
+            setSummary(summaryRes);
+          } catch (err) {
+            // Summary might not exist yet (needs to be manually generated)
+            console.log("No summary available yet");
+          }
         }
 
         setLoading(false);
@@ -409,7 +411,22 @@ export default function SessionDetailPage({
         <p style={{ opacity: 0.8, marginBottom: 16 }}>
           세그먼트 수: <strong>{segments.length}개</strong>
         </p>
-        {segments.length > 0 && (
+
+        {session?.status === "idle" && segments.length === 0 && (
+          <div
+            style={{
+              padding: 16,
+              background: "#12183a",
+              borderRadius: 8,
+              fontSize: 14,
+              color: "#99aab5",
+            }}
+          >
+            💡 홈 페이지로 돌아가서 녹음을 시작하세요.
+          </div>
+        )}
+
+        {session?.status === "uploaded" && segments.length > 0 && (
           <div
             style={{
               padding: 12,
@@ -419,6 +436,36 @@ export default function SessionDetailPage({
             }}
           >
             ✓ 음성 파일이 성공적으로 업로드되었습니다.
+          </div>
+        )}
+
+        {session?.status === "processing" && (
+          <div
+            style={{
+              padding: 16,
+              background: "#12183a",
+              borderRadius: 8,
+              fontSize: 14,
+              display: "flex",
+              alignItems: "center",
+              gap: 12,
+            }}
+          >
+            <div style={{ animation: "pulse 1.5s infinite" }}>⏳</div>
+            <div>텍스트 변환 작업이 진행 중입니다...</div>
+          </div>
+        )}
+
+        {session?.status === "completed" && (
+          <div
+            style={{
+              padding: 12,
+              background: "#0f4c20",
+              borderRadius: 8,
+              fontSize: 14,
+            }}
+          >
+            ✓ 텍스트 변환이 완료되었습니다!
           </div>
         )}
       </Section>
