@@ -163,10 +163,15 @@ export function useTranscription(sessionId: string, session: Session | null, set
       setTranscriptionStep("서버에 요청 전송 중...");
 
       const startTime = Date.now();
-      await apiRequest(`/sessions/${sessionId}/ingest`, {
+      console.log("📡 [Transcription] Full API URL:", `/sessions/${sessionId}/ingest`);
+      console.log("📡 [Transcription] Request options:", { method: "POST" });
+
+      const response = await apiRequest(`/sessions/${sessionId}/ingest`, {
         method: "POST",
       });
       const endTime = Date.now();
+
+      console.log("📥 [Transcription] API Response:", response);
 
       console.log(`✅ [Transcription] API request successful! (${endTime - startTime}ms)`);
       setTranscriptionStep("요청 완료! 상태 업데이트 중...");
