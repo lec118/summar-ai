@@ -73,7 +73,7 @@ export async function registerTus(app: FastifyInstance) {
         fs.createWriteStream(localPath)
       );
 
-      const segment = registerSegment(sessionId, {
+      const segment = await registerSegment(sessionId, {
         id: segmentId,
         localPath
       });
