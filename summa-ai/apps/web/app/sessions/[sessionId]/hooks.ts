@@ -144,56 +144,39 @@ export function useTranscription(sessionId: string, session: Session | null, set
   const [transcriptionStep, setTranscriptionStep] = useState<string>("");
 
   async function startTranscription() {
-    console.log("🎯 [Transcription] Button clicked!");
-    console.log("📊 [Transcription] Current session:", session);
-
     if (!session) {
-      console.error("❌ [Transcription] No session found!");
+      console.error("[Transcription] No session found");
       setError("세션을 찾을 수 없습니다.");
       return;
     }
 
     try {
-      console.log("🚀 [Transcription] Starting transcription process...");
       setTranscribing(true);
       setError(null);
-      setTranscriptionStep("API 요청 준비 중...");
-
-      console.log("📡 [Transcription] Sending API request to /sessions/" + sessionId + "/ingest");
       setTranscriptionStep("서버에 요청 전송 중...");
 
       const startTime = Date.now();
-      console.log("📡 [Transcription] Full API URL:", `/sessions/${sessionId}/ingest`);
-      console.log("📡 [Transcription] Request options:", { method: "POST" });
-
-      const response = await apiRequest(`/sessions/${sessionId}/ingest`, {
+      await apiRequest(`/sessions/${sessionId}/ingest`, {
         method: "POST",
       });
-      const endTime = Date.now();
+      const duration = Date.now() - startTime;
 
-      console.log("📥 [Transcription] API Response:", response);
-
-      console.log(`✅ [Transcription] API request successful! (${endTime - startTime}ms)`);
+      console.log(`[Transcription] Started successfully (${duration}ms)`);
       setTranscriptionStep("요청 완료! 상태 업데이트 중...");
 
       setSession({ ...session, status: "processing" });
-      console.log("🔄 [Transcription] Session status updated to 'processing'");
-
       setTranscriptionStep("");
+
       alert("✅ 텍스트 변환이 시작되었습니다!\n\n작업이 완료되면 페이지가 자동으로 업데이트됩니다.");
     } catch (err) {
-      console.error("❌ [Transcription] Error occurred:", err);
-      console.error("❌ [Transcription] Error details:", {
-        message: err instanceof Error ? err.message : String(err),
-        stack: err instanceof Error ? err.stack : undefined,
-      });
+      console.error("[Transcription] Error:", err);
 
       const errorMessage = err instanceof Error ? err.message : "텍스트 변환을 시작할 수 없습니다.";
       setError(errorMessage);
       setTranscriptionStep("");
       setTranscribing(false);
 
-      alert(`❌ 오류 발생\n\n${errorMessage}\n\n개발자 도구 콘솔을 확인해주세요.`);
+      alert(`❌ 오류 발생\n\n${errorMessage}`);
     }
   }
 

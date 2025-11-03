@@ -257,23 +257,10 @@ export default function SessionDetailPage({
         completed={isTranscriptReady}
         active={isTranscribing}
       >
-        {/* Debug Info */}
-        <div style={{ padding: 12, background: "#12183a", borderRadius: 8, marginBottom: 16, fontSize: 13, fontFamily: "monospace" }}>
-          <div>Session Status: <strong style={{ color: "#5865f2" }}>{session?.status || "null"}</strong></div>
-          <div>Can Start: <strong style={{ color: canStartTranscription ? "#27ae60" : "#e74c3c" }}>{String(canStartTranscription)}</strong></div>
-          <div>Is Transcribing: <strong style={{ color: isTranscribing ? "#f39c12" : "#95a5a6" }}>{String(isTranscribing)}</strong></div>
-          <div>Transcribing State: <strong style={{ color: transcribing ? "#f39c12" : "#95a5a6" }}>{String(transcribing)}</strong></div>
-          <div>Segments: <strong>{segments.length}</strong></div>
-          <div>Transcript Length: <strong>{transcript.length}</strong></div>
-        </div>
-
         {canStartTranscription && !isTranscribing && (
           <>
             <button
-              onClick={() => {
-                console.log("🖱️ Button onClick triggered!");
-                startTranscription();
-              }}
+              onClick={startTranscription}
               disabled={transcribing}
               style={{
                 ...btnLarge,
