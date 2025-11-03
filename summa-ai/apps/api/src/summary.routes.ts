@@ -1,7 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import { ApiResponse, SummaryItem as SummaryItemSchema } from "@summa/shared";
 import type { SummaryReport as SummaryReportType } from "@summa/shared";
-import { mem } from "./db.js";
+import { findSessionById } from "./db.js";
 import { listDecksByLecture } from "./db_slides.js";
 import { getParagraphs, getAlignments } from "./db_transcript.js";
 import { summarizeWithEvidence } from "@summa/summarizer";
@@ -10,14 +10,10 @@ import { saveSummary, getSummary } from "./db_summary.js";
 export async function registerSummaryRoutes(app: FastifyInstance) {
   app.post("/sessions/:sid/summarize", async (req, reply) => {
     const sid = (req.params as any).sid as string;
-    let lectureId: string | undefined;
-    for (const [lecId, sessions] of mem.sessions.entries()) {
-      if (sessions.some(s => s.id === sid)) {
-        lectureId = lecId;
-        break;
-      }
-    }
-    if (!lectureId) return reply.code(404).send({ ok: false, error: "session not found" });
+
+    const context = await findSessionById(sid);
+    if (!context) return reply.code(404).send({ ok: false, error: "session not found" });
+    const { lectureId } = context;
 
     const decks = listDecksByLecture(lectureId);
     if (decks.length === 0) return reply.code(400).send({ ok: false, error: "no slides" });

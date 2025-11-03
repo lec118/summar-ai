@@ -1,0 +1,53 @@
+// Prisma Schema for Summa AI
+// Database: PostgreSQL (Supabase)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Lecture {
+  id        String   @id @default(uuid())
+  title     String
+  createdAt BigInt   // Unix timestamp in milliseconds
+
+  sessions  Session[]
+
+  @@map("lectures")
+}
+
+model Session {
+  id        String   @id @default(uuid())
+  lectureId String
+  idx       Int      // Session index within lecture
+  mode      String   // "manual" | "auto"
+  status    String   @default("idle") // "idle" | "recording" | "uploaded" | "processing" | "completed" | "error"
+  createdAt BigInt   // Unix timestamp in milliseconds
+
+  // Policy fields (flattened for simplicity)
+  policyLengthMin  Int     @default(55)
+  policyOverlapSec Int     @default(5)
+  policyVadPause   Boolean @default(true)
+
+  lecture   Lecture  @relation(fields: [lectureId], references: [id], onDelete: Cascade)
+  segments  Segment[]
+
+  @@index([lectureId])
+  @@map("sessions")
+}
+
+model Segment {
+  id        String   @id @default(uuid())
+  sessionId String
+  localPath String?  // Optional path to uploaded audio file
+  createdAt BigInt   // Unix timestamp in milliseconds
+
+  session   Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId])
+  @@map("segments")
+}

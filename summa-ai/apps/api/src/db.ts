@@ -1,5 +1,8 @@
 import type { Lecture, Session } from "@summa/shared";
 import { randomUUID } from "crypto";
+import { PrismaClient } from "@prisma/client";
+
+const prisma = new PrismaClient();
 
 export type SessionSegment = {
   id: string;
@@ -8,140 +11,220 @@ export type SessionSegment = {
   createdAt: number;
 };
 
-export const mem = {
-  lectures: new Map<string, Lecture>(),
-  sessions: new Map<string, Session[]>(), // key: lectureId
-  segments: new Map<string, SessionSegment[]>(), // key: sessionId
-  sessionIndex: new Map<string, { lectureId: string; session: Session }>(), // key: sessionId -> fast lookup
-};
-
 const processingJobs = new Map<string, number>(); // key: sessionId -> remaining jobs
 
-export function createLecture(title: string): Lecture {
-  const lec = { id: randomUUID(), title, createdAt: Date.now() } as Lecture;
-  mem.lectures.set(lec.id, lec);
-  mem.sessions.set(lec.id, []);
-  return lec;
-}
-
-export function createSession(lectureId: string, partial: Partial<Session>): Session {
-  const list = mem.sessions.get(lectureId) ?? [];
-  const idx = list.length;
-  const sess: Session = {
-    id: randomUUID(),
-    lectureId,
-    idx,
-    mode: partial.mode ?? "manual",
+/**
+ * Helper function to convert Prisma Session to shared Session type
+ */
+function toPrismaSession(prismaSession: any): Session {
+  return {
+    id: prismaSession.id,
+    lectureId: prismaSession.lectureId,
+    idx: prismaSession.idx,
+    mode: prismaSession.mode as "manual" | "auto",
     policy: {
-      lengthMin: partial.policy?.lengthMin ?? 55,
-      overlapSec: partial.policy?.overlapSec ?? 5,
-      vadPause: partial.policy?.vadPause ?? true
+      lengthMin: prismaSession.policyLengthMin,
+      overlapSec: prismaSession.policyOverlapSec,
+      vadPause: prismaSession.policyVadPause
     },
-    status: "idle",
-    createdAt: Date.now()
+    status: prismaSession.status as "idle" | "recording" | "uploaded" | "processing" | "completed" | "error",
+    createdAt: Number(prismaSession.createdAt)
   };
-  list.push(sess);
-  mem.sessions.set(lectureId, list);
-  mem.segments.set(sess.id, []);
-
-  // Add to index for O(1) lookup
-  mem.sessionIndex.set(sess.id, { lectureId, session: sess });
-
-  return sess;
 }
 
-export function registerSegment(sessionId: string, segment: Omit<SessionSegment, "sessionId" | "createdAt"> & { createdAt?: number }) {
-  const segs = mem.segments.get(sessionId) ?? [];
-  const next: SessionSegment = {
-    createdAt: segment.createdAt ?? Date.now(),
-    sessionId,
-    ...segment
-  };
-  segs.push(next);
-  mem.segments.set(sessionId, segs);
-
-  const context = findSessionById(sessionId);
-  if (context && context.session.status !== "processing" && context.session.status !== "completed") {
-    context.session.status = "uploaded";
-  }
-
-  return next;
-}
-
-export function getSegments(sessionId: string) {
-  return [...(mem.segments.get(sessionId) ?? [])];
-}
-
-export function patchSession(lectureId: string, sid: string, update: Partial<Session>) {
-  const list = mem.sessions.get(lectureId) ?? [];
-  const i = list.findIndex(s => s.id === sid);
-  if (i < 0) return null;
-  const cur = list[i];
-  const next: Session = {
-    ...cur,
-    mode: update.mode ?? cur.mode,
-    policy: {
-      lengthMin: update.policy?.lengthMin ?? cur.policy.lengthMin,
-      overlapSec: update.policy?.overlapSec ?? cur.policy.overlapSec,
-      vadPause: update.policy?.vadPause ?? cur.policy.vadPause
+export async function createLecture(title: string): Promise<Lecture> {
+  const lec = await prisma.lecture.create({
+    data: {
+      id: randomUUID(),
+      title,
+      createdAt: BigInt(Date.now())
     }
+  });
+
+  return {
+    id: lec.id,
+    title: lec.title,
+    createdAt: Number(lec.createdAt)
   };
-  list[i] = next;
-
-  // Update index
-  mem.sessionIndex.set(sid, { lectureId, session: next });
-
-  return next;
 }
 
-export function deleteSession(lectureId: string, sid: string): boolean {
-  const list = mem.sessions.get(lectureId) ?? [];
-  const i = list.findIndex(s => s.id === sid);
-  if (i < 0) return false;
+export async function createSession(lectureId: string, partial: Partial<Session>): Promise<Session> {
+  // Count existing sessions to determine idx
+  const count = await prisma.session.count({
+    where: { lectureId }
+  });
 
-  // Remove session from list
-  list.splice(i, 1);
-  mem.sessions.set(lectureId, list);
+  const sess = await prisma.session.create({
+    data: {
+      id: randomUUID(),
+      lectureId,
+      idx: count,
+      mode: partial.mode ?? "manual",
+      policyLengthMin: partial.policy?.lengthMin ?? 55,
+      policyOverlapSec: partial.policy?.overlapSec ?? 5,
+      policyVadPause: partial.policy?.vadPause ?? true,
+      status: "idle",
+      createdAt: BigInt(Date.now())
+    }
+  });
 
-  // Clean up segments
-  mem.segments.delete(sid);
+  return toPrismaSession(sess);
+}
 
-  // Remove from index
-  mem.sessionIndex.delete(sid);
+export async function registerSegment(
+  sessionId: string,
+  segment: Omit<SessionSegment, "sessionId" | "createdAt"> & { createdAt?: number }
+): Promise<SessionSegment> {
+  const seg = await prisma.segment.create({
+    data: {
+      id: segment.id,
+      sessionId,
+      localPath: segment.localPath,
+      createdAt: BigInt(segment.createdAt ?? Date.now())
+    }
+  });
+
+  // Update session status to "uploaded" if it's not already processing/completed
+  await prisma.session.updateMany({
+    where: {
+      id: sessionId,
+      status: {
+        notIn: ["processing", "completed"]
+      }
+    },
+    data: {
+      status: "uploaded"
+    }
+  });
+
+  return {
+    id: seg.id,
+    sessionId: seg.sessionId,
+    localPath: seg.localPath ?? undefined,
+    createdAt: Number(seg.createdAt)
+  };
+}
+
+export async function getSegments(sessionId: string): Promise<SessionSegment[]> {
+  const segments = await prisma.segment.findMany({
+    where: { sessionId },
+    orderBy: { createdAt: "asc" }
+  });
+
+  return segments.map(seg => ({
+    id: seg.id,
+    sessionId: seg.sessionId,
+    localPath: seg.localPath ?? undefined,
+    createdAt: Number(seg.createdAt)
+  }));
+}
+
+export async function patchSession(
+  lectureId: string,
+  sid: string,
+  update: Partial<Session>
+): Promise<Session | null> {
+  const existing = await prisma.session.findFirst({
+    where: {
+      id: sid,
+      lectureId
+    }
+  });
+
+  if (!existing) return null;
+
+  const updated = await prisma.session.update({
+    where: { id: sid },
+    data: {
+      mode: update.mode ?? existing.mode,
+      policyLengthMin: update.policy?.lengthMin ?? existing.policyLengthMin,
+      policyOverlapSec: update.policy?.overlapSec ?? existing.policyOverlapSec,
+      policyVadPause: update.policy?.vadPause ?? existing.policyVadPause
+    }
+  });
+
+  return toPrismaSession(updated);
+}
+
+export async function deleteSession(lectureId: string, sid: string): Promise<boolean> {
+  const existing = await prisma.session.findFirst({
+    where: {
+      id: sid,
+      lectureId
+    }
+  });
+
+  if (!existing) return false;
+
+  // Delete session (segments will cascade)
+  await prisma.session.delete({
+    where: { id: sid }
+  });
 
   return true;
 }
 
-export function findSessionById(sessionId: string):
-  | { lectureId: string; session: Session }
-  | null {
-  // O(1) lookup using index instead of O(n*m) nested loop
-  return mem.sessionIndex.get(sessionId) ?? null;
+export async function findSessionById(
+  sessionId: string
+): Promise<{ lectureId: string; session: Session } | null> {
+  const sess = await prisma.session.findUnique({
+    where: { id: sessionId }
+  });
+
+  if (!sess) return null;
+
+  return {
+    lectureId: sess.lectureId,
+    session: toPrismaSession(sess)
+  };
+}
+
+export async function getAllLectures(): Promise<Lecture[]> {
+  const lectures = await prisma.lecture.findMany({
+    orderBy: { createdAt: "desc" }
+  });
+
+  return lectures.map(lec => ({
+    id: lec.id,
+    title: lec.title,
+    createdAt: Number(lec.createdAt)
+  }));
+}
+
+export async function getSessionsByLectureId(lectureId: string): Promise<Session[]> {
+  const sessions = await prisma.session.findMany({
+    where: { lectureId },
+    orderBy: { idx: "asc" }
+  });
+
+  return sessions.map(toPrismaSession);
 }
 
 export function markProcessingJobs(sessionId: string, jobCount: number) {
   processingJobs.set(sessionId, jobCount);
 }
 
-export function resolveProcessingJob(sessionId: string): number {
+export async function resolveProcessingJob(sessionId: string): Promise<number> {
   if (!processingJobs.has(sessionId)) {
-    const context = findSessionById(sessionId);
-    if (context) {
-      context.session.status = "completed";
-    }
+    await prisma.session.updateMany({
+      where: { id: sessionId },
+      data: { status: "completed" }
+    });
     return 0;
   }
 
   const remaining = (processingJobs.get(sessionId) ?? 0) - 1;
   if (remaining <= 0) {
     processingJobs.delete(sessionId);
-    const context = findSessionById(sessionId);
-    if (context) {
-      context.session.status = "completed";
-    }
+    await prisma.session.updateMany({
+      where: { id: sessionId },
+      data: { status: "completed" }
+    });
     return 0;
   }
 
   processingJobs.set(sessionId, remaining);
   return remaining;
 }
+
+export { prisma };

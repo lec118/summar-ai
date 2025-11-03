@@ -13,13 +13,15 @@ import {
 import {
   createLecture,
   createSession,
-  mem,
+  getAllLectures,
+  getSessionsByLectureId,
   patchSession,
   getSegments,
   deleteSession,
   findSessionById,
   markProcessingJobs,
-  resolveProcessingJob
+  resolveProcessingJob,
+  prisma
 } from "./db.js";
 import { registerTus } from "./upload.js";
 import { registerSlidesRoutes } from "./slides.routes.js";
@@ -129,12 +131,15 @@ await registerSummaryRoutes(app);
 app.post("/lectures", async (req, reply) => {
   const body = CreateLectureDTO.safeParse(req.body);
   if (!body.success) return reply.code(400).send({ ok: false, error: body.error });
-  const lec = createLecture(body.data.title);
+  const lec = await createLecture(body.data.title);
   return ApiResponse(lec);
 });
 
 /** List lectures */
-app.get("/lectures", async () => ApiResponse(Array.from(mem.lectures.values())));
+app.get("/lectures", async () => {
+  const lectures = await getAllLectures();
+  return ApiResponse(lectures);
+});
 
 /** Create 1-hour session */
 app.post("/lectures/:id/sessions", async (req, reply) => {
@@ -142,12 +147,13 @@ app.post("/lectures/:id/sessions", async (req, reply) => {
   if (!params.success) return reply.code(400).send({ ok: false, error: "Invalid lecture ID" });
 
   const { id } = params.data;
-  if (!mem.lectures.has(id)) return reply.code(404).send({ ok: false, error: "lecture not found" });
+  const lecture = await prisma.lecture.findUnique({ where: { id } });
+  if (!lecture) return reply.code(404).send({ ok: false, error: "lecture not found" });
 
   const body = CreateSessionDTO.safeParse(req.body ?? {});
   if (!body.success) return reply.code(400).send({ ok: false, error: body.error });
 
-  const sess = createSession(id, body.data);
+  const sess = await createSession(id, body.data);
   return ApiResponse(sess);
 });
 
@@ -157,8 +163,11 @@ app.get("/lectures/:id/sessions", async (req, reply) => {
   if (!params.success) return reply.code(400).send({ ok: false, error: "Invalid lecture ID" });
 
   const { id } = params.data;
-  if (!mem.lectures.has(id)) return reply.code(404).send({ ok: false, error: "lecture not found" });
-  return ApiResponse(mem.sessions.get(id) ?? []);
+  const lecture = await prisma.lecture.findUnique({ where: { id } });
+  if (!lecture) return reply.code(404).send({ ok: false, error: "lecture not found" });
+
+  const sessions = await getSessionsByLectureId(id);
+  return ApiResponse(sessions);
 });
 
 /** Get single session by ID */
@@ -167,7 +176,7 @@ app.get("/sessions/:sid", async (req, reply) => {
   if (!params.success) return reply.code(400).send({ ok: false, error: "Invalid session ID" });
 
   const { sid } = params.data;
-  const context = findSessionById(sid);
+  const context = await findSessionById(sid);
   if (!context) {
     return reply.code(404).send({ ok: false, error: "session not found" });
   }
@@ -180,7 +189,8 @@ app.get("/sessions/:sid/segments", async (req, reply) => {
   if (!params.success) return reply.code(400).send({ ok: false, error: "Invalid session ID" });
 
   const { sid } = params.data;
-  return ApiResponse(getSegments(sid));
+  const segments = await getSegments(sid);
+  return ApiResponse(segments);
 });
 
 /** Toggle session mode/policy */
@@ -192,7 +202,7 @@ app.patch("/lectures/:id/sessions/:sid", async (req, reply) => {
   const body = PatchSessionDTO.safeParse(req.body ?? {});
   if (!body.success) return reply.code(400).send({ ok: false, error: body.error });
 
-  const updated = patchSession(id, sid, body.data);
+  const updated = await patchSession(id, sid, body.data);
   if (!updated) return reply.code(404).send({ ok: false, error: "session not found" });
   return ApiResponse(updated);
 });
@@ -203,7 +213,7 @@ app.delete("/lectures/:id/sessions/:sid", async (req, reply) => {
   if (!params.success) return reply.code(400).send({ ok: false, error: "Invalid lecture or session ID" });
 
   const { id, sid } = params.data;
-  const deleted = deleteSession(id, sid);
+  const deleted = await deleteSession(id, sid);
   if (!deleted) return reply.code(404).send({ ok: false, error: "session not found" });
   return ApiResponse({ deleted: true, sessionId: sid });
 });
@@ -215,17 +225,22 @@ app.post("/sessions/:sid/ingest", async (req, reply) => {
 
   const { sid } = params.data;
 
-  const context = findSessionById(sid);
+  const context = await findSessionById(sid);
   if (!context) {
     return reply.code(404).send({ ok: false, error: "session not found" });
   }
   const { lectureId, session } = context;
 
-  const segments = getSegments(sid);
+  const segments = await getSegments(sid);
   if (segments.length === 0) {
     return reply.code(400).send({ ok: false, error: "no segments to process" });
   }
 
+  // Update session status to "processing"
+  await prisma.session.update({
+    where: { id: sid },
+    data: { status: "processing" }
+  });
   session.status = "processing";
   markProcessingJobs(sid, segments.length);
 
@@ -279,7 +294,7 @@ app.post("/sessions/:sid/transcription-result", async (req, reply) => {
     appendParagraphs(sid, body.data.paragraphs);
   }
 
-  const remainingJobs = resolveProcessingJob(sid);
+  const remainingJobs = await resolveProcessingJob(sid);
 
   return ApiResponse({
     remainingJobs
@@ -292,9 +307,10 @@ app.get("/lectures/:id/status", async (req, reply) => {
   if (!params.success) return reply.code(400).send({ ok: false, error: "Invalid lecture ID" });
 
   const { id } = params.data;
-  if (!mem.lectures.has(id)) return reply.code(404).send({ ok: false, error: "lecture not found" });
+  const lecture = await prisma.lecture.findUnique({ where: { id } });
+  if (!lecture) return reply.code(404).send({ ok: false, error: "lecture not found" });
 
-  const sessions = mem.sessions.get(id) ?? [];
+  const sessions = await getSessionsByLectureId(id);
   const counts = sessions.reduce<Record<string, number>>((acc, s) => {
     acc[s.status] = (acc[s.status] ?? 0) + 1;
     return acc;
@@ -310,6 +326,10 @@ async function gracefulShutdown(signal: string) {
     // Close Fastify server (stops accepting new requests)
     await app.close();
     console.log("✅ Fastify server closed");
+
+    // Close Prisma connection
+    await prisma.$disconnect();
+    console.log("✅ Prisma disconnected");
 
     // Close Redis connection
     await connection.quit();
