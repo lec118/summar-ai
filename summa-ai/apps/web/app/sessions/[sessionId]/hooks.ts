@@ -142,6 +142,7 @@ export function useSessionPolling(
 export function useTranscription(sessionId: string, session: Session | null, setSession: (session: Session) => void, setError: (error: string | null) => void) {
   const [transcribing, setTranscribing] = useState(false);
   const [transcriptionStep, setTranscriptionStep] = useState<string>("");
+  const [successMessage, setSuccessMessage] = useState<string>("");
 
   async function startTranscription() {
     if (!session) {
@@ -168,7 +169,9 @@ export function useTranscription(sessionId: string, session: Session | null, set
       setSession({ ...session, status: "processing" });
       setTranscriptionStep("");
 
-      alert("✅ 텍스트 변환이 시작되었습니다!\n\n작업이 완료되면 페이지가 자동으로 업데이트됩니다.");
+      // Show success message instead of alert
+      setSuccessMessage("텍스트 변환이 시작되었습니다. 작업이 완료되면 페이지가 자동으로 업데이트됩니다.");
+      setTimeout(() => setSuccessMessage(""), 5000);
     } catch (err) {
       console.error("[Transcription] Error:", err);
 
@@ -176,12 +179,10 @@ export function useTranscription(sessionId: string, session: Session | null, set
       setError(errorMessage);
       setTranscriptionStep("");
       setTranscribing(false);
-
-      alert(`❌ 오류 발생\n\n${errorMessage}`);
     }
   }
 
-  return { transcribing, transcriptionStep, startTranscription };
+  return { transcribing, transcriptionStep, successMessage, startTranscription };
 }
 
 export function useSlidesUpload(sessionId: string, setError: (error: string | null) => void) {

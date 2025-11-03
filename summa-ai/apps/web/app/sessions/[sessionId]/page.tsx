@@ -28,13 +28,11 @@ export default function SessionDetailPage({
   const searchParams = useSearchParams();
   const { sessionId } = params;
   const autoStart = searchParams.get("autoStart") === "true";
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Custom hooks for data and actions
   const { session, setSession, segments, transcript, setTranscript, summary, setSummary, loading, error, setError } = useSessionData(sessionId);
   useSessionPolling(sessionId, session, setSession, setTranscript);
-  const { transcribing, transcriptionStep, startTranscription } = useTranscription(sessionId, session, setSession, setError);
-  const { uploadingSlides, uploadSlides } = useSlidesUpload(sessionId, setError);
+  const { transcribing, transcriptionStep, successMessage, startTranscription } = useTranscription(sessionId, session, setSession, setError);
   const { summarizing, generateSummary } = useSummaryGeneration(sessionId, setSummary, setError);
 
   // Auto-start transcription if requested
@@ -43,17 +41,6 @@ export default function SessionDetailPage({
       startTranscription();
     }
   }, [autoStart, session?.status]);
-
-  // Handle slides upload
-  async function handleSlidesUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    await uploadSlides(file);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
-  }
 
   // Computed values
   const isTranscriptReady = session?.status === "completed" || transcript.length > 0;
@@ -144,11 +131,41 @@ export default function SessionDetailPage({
         </div>
       )}
 
+      {/* Success Message Toast */}
+      {successMessage && (
+        <div
+          style={{
+            position: "fixed",
+            top: 24,
+            right: 24,
+            padding: 20,
+            background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+            borderRadius: 16,
+            boxShadow: "0 8px 32px rgba(0,0,0,0.3)",
+            zIndex: 9999,
+            maxWidth: 400,
+            animation: "slideIn 0.3s ease-out",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "flex-start", gap: 16 }}>
+            <div style={{ fontSize: 32, flexShrink: 0 }}>✅</div>
+            <div>
+              <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 8, color: "#fff" }}>
+                변환 시작됨
+              </div>
+              <div style={{ fontSize: 14, opacity: 0.9, lineHeight: 1.5, color: "#fff" }}>
+                {successMessage}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Progress Steps */}
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+          gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
           gap: 16,
           marginBottom: 40,
         }}
@@ -169,13 +186,6 @@ export default function SessionDetailPage({
         />
         <StepCard
           number={3}
-          title="슬라이드 업로드"
-          completed={false}
-          active={false}
-          optional
-        />
-        <StepCard
-          number={4}
           title="요약 생성"
           completed={!!summary}
           active={summarizing}
@@ -388,34 +398,9 @@ export default function SessionDetailPage({
         )}
       </Section>
 
-      {/* Step 3: Slides Upload */}
-      <Section title="📄 Step 3: 슬라이드 업로드 (선택사항)">
-        <p style={{ opacity: 0.8, marginBottom: 16 }}>
-          강의 슬라이드(PDF)를 업로드하면 더 정확한 요약을 생성할 수 있습니다.
-        </p>
-        <button
-          onClick={() => fileInputRef.current?.click()}
-          disabled={uploadingSlides}
-          style={{
-            ...btnPrimary,
-            opacity: uploadingSlides ? 0.5 : 1,
-            cursor: uploadingSlides ? "not-allowed" : "pointer",
-          }}
-        >
-          {uploadingSlides ? "업로드 중..." : "📤 PDF 업로드"}
-        </button>
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="application/pdf"
-          onChange={handleSlidesUpload}
-          style={{ display: "none" }}
-        />
-      </Section>
-
-      {/* Step 4: Summary Generation */}
+      {/* Step 3: Summary Generation */}
       <Section
-        title="📝 Step 4: 요약 생성"
+        title="📝 Step 3: 요약 생성"
         completed={!!summary}
         active={summarizing}
       >
@@ -515,6 +500,17 @@ export default function SessionDetailPage({
           100% {
             transform: translateX(100%);
             opacity: 0.5;
+          }
+        }
+
+        @keyframes slideIn {
+          from {
+            transform: translateX(100%);
+            opacity: 0;
+          }
+          to {
+            transform: translateX(0);
+            opacity: 1;
           }
         }
       `}</style>
