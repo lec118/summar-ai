@@ -158,6 +158,7 @@ export function useTranscription(sessionId: string, session: Session | null, set
       const startTime = Date.now();
       await apiRequest(`/sessions/${sessionId}/ingest`, {
         method: "POST",
+        body: JSON.stringify({}),
       });
       const duration = Date.now() - startTime;
 
