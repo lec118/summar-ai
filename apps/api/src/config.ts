@@ -55,9 +55,11 @@ function validateConfig(): AppConfig {
     throw new Error(`Invalid PORT: ${config.PORT}. Must be between 1 and 65535.`);
   }
 
-  // Validate REDIS_URL format
-  if (!config.REDIS_URL.startsWith("redis://") && !config.REDIS_URL.startsWith("rediss://")) {
-    throw new Error(`Invalid REDIS_URL format. Must start with redis:// or rediss://`);
+  // Validate REDIS_URL format only if provided and not using default
+  if (config.REDIS_URL && config.REDIS_URL !== "redis://127.0.0.1:6379") {
+    if (!config.REDIS_URL.startsWith("redis://") && !config.REDIS_URL.startsWith("rediss://")) {
+      console.warn(`Warning: REDIS_URL format may be invalid: ${config.REDIS_URL}. Expected format: redis:// or rediss://`);
+    }
   }
 
   return config;

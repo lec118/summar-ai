@@ -2,7 +2,7 @@ import {
   CONSTANTS,
   config,
   createRedisConnection
-} from "./chunk-LI6RIKOR.js";
+} from "./chunk-MDU3YXXR.js";
 
 // src/worker.ts
 import { Worker } from "bullmq";

@@ -3,7 +3,7 @@ import {
   config,
   createRedisConnection,
   testRedisConnection
-} from "./chunk-LI6RIKOR.js";
+} from "./chunk-MDU3YXXR.js";
 
 // src/server.ts
 import Fastify from "fastify";
