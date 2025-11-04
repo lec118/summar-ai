@@ -34,3 +34,4 @@ pnpm -w dev           # API + Worker + Web 실행
 3. `POST /sessions/:sid/align`으로 문단↔슬라이드 정렬 저장
 4. `POST /sessions/:sid/summarize` 실행 → 증거 기반 요약 생성
 5. `GET /sessions/:sid/summary`로 최신 요약 조회
+# Trigger deployment
