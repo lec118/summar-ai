@@ -2,6 +2,9 @@ import type { ApiResponseType } from "@summa/shared";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
 
+// Note: API routes do NOT have an /api prefix
+// Routes are: /lectures, /sessions, etc.
+
 export class ApiError extends Error {
   constructor(
     message: string,
