@@ -1,31 +1,12 @@
 services:
-  # Next.js Web App
-  - type: web
-    name: summa-web
-    runtime: node
-    region: oregon
-    plan: free
-    rootDir: summa-ai
-    buildCommand: pnpm install && pnpm -r build
-    startCommand: cd apps/web && pnpm start
-    envVars:
-      - key: NODE_VERSION
-        value: 18
-      - key: NEXT_PUBLIC_API_URL
-        fromService:
-          type: web
-          name: summa-api
-          envVarKey: RENDER_EXTERNAL_URL
-
   # Fastify API Server
   - type: web
     name: summa-api
     runtime: node
     region: oregon
     plan: free
-    rootDir: summa-ai
-    buildCommand: pnpm install && cd apps/api && prisma generate && cd ../.. && pnpm -r build
-    startCommand: cd apps/api && prisma migrate deploy && pnpm start:all
+    buildCommand: pnpm install && cd apps/api && pnpm prisma generate && cd ../.. && pnpm -r build
+    startCommand: cd apps/api && pnpm prisma migrate deploy && pnpm start:all
     envVars:
       - key: NODE_VERSION
         value: 18
@@ -50,10 +31,7 @@ services:
       - key: NODE_ENV
         value: production
       - key: ALLOWED_ORIGINS
-        fromService:
-          type: web
-          name: summa-web
-          envVarKey: RENDER_EXTERNAL_URL
+        value: https://web-7lfj1dtgz-chong-xx-s-projects.vercel.app,https://web-chong-xx-s-projects.vercel.app
 
   # Worker Service (Background Jobs)
   - type: worker
@@ -61,8 +39,7 @@ services:
     runtime: node
     region: oregon
     plan: free
-    rootDir: summa-ai
-    buildCommand: pnpm install && cd apps/api && prisma generate && cd ../.. && pnpm -r build
+    buildCommand: pnpm install && cd apps/api && pnpm prisma generate && cd ../.. && pnpm -r build
     startCommand: cd apps/api && pnpm start:worker
     envVars:
       - key: NODE_VERSION
