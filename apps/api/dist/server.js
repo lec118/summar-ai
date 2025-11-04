@@ -3,7 +3,7 @@ import {
   config,
   createRedisConnection,
   testRedisConnection
-} from "./chunk-6NBUSQ3T.js";
+} from "./chunk-LI6RIKOR.js";
 
 // src/server.ts
 import Fastify from "fastify";
@@ -20,111 +20,173 @@ import {
 
 // src/db.ts
 import { randomUUID } from "crypto";
-var mem = {
-  lectures: /* @__PURE__ */ new Map(),
-  sessions: /* @__PURE__ */ new Map(),
-  // key: lectureId
-  segments: /* @__PURE__ */ new Map(),
-  // key: sessionId
-  sessionIndex: /* @__PURE__ */ new Map()
-  // key: sessionId -> fast lookup
-};
+import { PrismaClient } from "@prisma/client";
+var prisma = new PrismaClient();
 var processingJobs = /* @__PURE__ */ new Map();
-function createLecture(title) {
-  const lec = { id: randomUUID(), title, createdAt: Date.now() };
-  mem.lectures.set(lec.id, lec);
-  mem.sessions.set(lec.id, []);
-  return lec;
-}
-function createSession(lectureId, partial) {
-  const list = mem.sessions.get(lectureId) ?? [];
-  const idx = list.length;
-  const sess = {
-    id: randomUUID(),
-    lectureId,
-    idx,
-    mode: partial.mode ?? "manual",
+function toPrismaSession(prismaSession) {
+  return {
+    id: prismaSession.id,
+    lectureId: prismaSession.lectureId,
+    idx: prismaSession.idx,
+    mode: prismaSession.mode,
     policy: {
-      lengthMin: partial.policy?.lengthMin ?? 55,
-      overlapSec: partial.policy?.overlapSec ?? 5,
-      vadPause: partial.policy?.vadPause ?? true
+      lengthMin: prismaSession.policyLengthMin,
+      overlapSec: prismaSession.policyOverlapSec,
+      vadPause: prismaSession.policyVadPause
     },
-    status: "idle",
-    createdAt: Date.now()
+    status: prismaSession.status,
+    createdAt: Number(prismaSession.createdAt)
   };
-  list.push(sess);
-  mem.sessions.set(lectureId, list);
-  mem.segments.set(sess.id, []);
-  mem.sessionIndex.set(sess.id, { lectureId, session: sess });
-  return sess;
 }
-function registerSegment(sessionId, segment) {
-  const segs = mem.segments.get(sessionId) ?? [];
-  const next = {
-    createdAt: segment.createdAt ?? Date.now(),
-    sessionId,
-    ...segment
-  };
-  segs.push(next);
-  mem.segments.set(sessionId, segs);
-  const context = findSessionById(sessionId);
-  if (context && context.session.status !== "processing" && context.session.status !== "completed") {
-    context.session.status = "uploaded";
-  }
-  return next;
-}
-function getSegments(sessionId) {
-  return [...mem.segments.get(sessionId) ?? []];
-}
-function patchSession(lectureId, sid, update) {
-  const list = mem.sessions.get(lectureId) ?? [];
-  const i = list.findIndex((s) => s.id === sid);
-  if (i < 0) return null;
-  const cur = list[i];
-  const next = {
-    ...cur,
-    mode: update.mode ?? cur.mode,
-    policy: {
-      lengthMin: update.policy?.lengthMin ?? cur.policy.lengthMin,
-      overlapSec: update.policy?.overlapSec ?? cur.policy.overlapSec,
-      vadPause: update.policy?.vadPause ?? cur.policy.vadPause
+async function createLecture(title) {
+  const lec = await prisma.lecture.create({
+    data: {
+      id: randomUUID(),
+      title,
+      createdAt: BigInt(Date.now())
     }
+  });
+  return {
+    id: lec.id,
+    title: lec.title,
+    createdAt: Number(lec.createdAt)
   };
-  list[i] = next;
-  mem.sessionIndex.set(sid, { lectureId, session: next });
-  return next;
 }
-function deleteSession(lectureId, sid) {
-  const list = mem.sessions.get(lectureId) ?? [];
-  const i = list.findIndex((s) => s.id === sid);
-  if (i < 0) return false;
-  list.splice(i, 1);
-  mem.sessions.set(lectureId, list);
-  mem.segments.delete(sid);
-  mem.sessionIndex.delete(sid);
+async function createSession(lectureId, partial) {
+  const count = await prisma.session.count({
+    where: { lectureId }
+  });
+  const sess = await prisma.session.create({
+    data: {
+      id: randomUUID(),
+      lectureId,
+      idx: count,
+      mode: partial.mode ?? "manual",
+      policyLengthMin: partial.policy?.lengthMin ?? 55,
+      policyOverlapSec: partial.policy?.overlapSec ?? 5,
+      policyVadPause: partial.policy?.vadPause ?? true,
+      status: "idle",
+      createdAt: BigInt(Date.now())
+    }
+  });
+  return toPrismaSession(sess);
+}
+async function registerSegment(sessionId, segment) {
+  const seg = await prisma.segment.create({
+    data: {
+      id: segment.id,
+      sessionId,
+      localPath: segment.localPath,
+      createdAt: BigInt(segment.createdAt ?? Date.now())
+    }
+  });
+  await prisma.session.updateMany({
+    where: {
+      id: sessionId,
+      status: {
+        notIn: ["processing", "completed"]
+      }
+    },
+    data: {
+      status: "uploaded"
+    }
+  });
+  return {
+    id: seg.id,
+    sessionId: seg.sessionId,
+    localPath: seg.localPath ?? void 0,
+    createdAt: Number(seg.createdAt)
+  };
+}
+async function getSegments(sessionId) {
+  const segments = await prisma.segment.findMany({
+    where: { sessionId },
+    orderBy: { createdAt: "asc" }
+  });
+  return segments.map((seg) => ({
+    id: seg.id,
+    sessionId: seg.sessionId,
+    localPath: seg.localPath ?? void 0,
+    createdAt: Number(seg.createdAt)
+  }));
+}
+async function patchSession(lectureId, sid, update) {
+  const existing = await prisma.session.findFirst({
+    where: {
+      id: sid,
+      lectureId
+    }
+  });
+  if (!existing) return null;
+  const updated = await prisma.session.update({
+    where: { id: sid },
+    data: {
+      mode: update.mode ?? existing.mode,
+      policyLengthMin: update.policy?.lengthMin ?? existing.policyLengthMin,
+      policyOverlapSec: update.policy?.overlapSec ?? existing.policyOverlapSec,
+      policyVadPause: update.policy?.vadPause ?? existing.policyVadPause
+    }
+  });
+  return toPrismaSession(updated);
+}
+async function deleteSession(lectureId, sid) {
+  const existing = await prisma.session.findFirst({
+    where: {
+      id: sid,
+      lectureId
+    }
+  });
+  if (!existing) return false;
+  await prisma.session.delete({
+    where: { id: sid }
+  });
   return true;
 }
-function findSessionById(sessionId) {
-  return mem.sessionIndex.get(sessionId) ?? null;
+async function findSessionById(sessionId) {
+  const sess = await prisma.session.findUnique({
+    where: { id: sessionId }
+  });
+  if (!sess) return null;
+  return {
+    lectureId: sess.lectureId,
+    session: toPrismaSession(sess)
+  };
+}
+async function getAllLectures() {
+  const lectures = await prisma.lecture.findMany({
+    orderBy: { createdAt: "desc" }
+  });
+  return lectures.map((lec) => ({
+    id: lec.id,
+    title: lec.title,
+    createdAt: Number(lec.createdAt)
+  }));
+}
+async function getSessionsByLectureId(lectureId) {
+  const sessions = await prisma.session.findMany({
+    where: { lectureId },
+    orderBy: { idx: "asc" }
+  });
+  return sessions.map(toPrismaSession);
 }
 function markProcessingJobs(sessionId, jobCount) {
   processingJobs.set(sessionId, jobCount);
 }
-function resolveProcessingJob(sessionId) {
+async function resolveProcessingJob(sessionId) {
   if (!processingJobs.has(sessionId)) {
-    const context = findSessionById(sessionId);
-    if (context) {
-      context.session.status = "completed";
-    }
+    await prisma.session.updateMany({
+      where: { id: sessionId },
+      data: { status: "completed" }
+    });
     return 0;
   }
   const remaining = (processingJobs.get(sessionId) ?? 0) - 1;
   if (remaining <= 0) {
     processingJobs.delete(sessionId);
-    const context = findSessionById(sessionId);
-    if (context) {
-      context.session.status = "completed";
-    }
+    await prisma.session.updateMany({
+      where: { id: sessionId },
+      data: { status: "completed" }
+    });
     return 0;
   }
   processingJobs.set(sessionId, remaining);
@@ -190,7 +252,7 @@ async function registerTus(app2) {
         createSizeGuard(MAX_FILE_BYTES),
         fs.createWriteStream(localPath)
       );
-      const segment = registerSegment(sessionId, {
+      const segment = await registerSegment(sessionId, {
         id: segmentId,
         localPath
       });
@@ -358,47 +420,68 @@ function getSummary(sessionId) {
 async function registerSummaryRoutes(app2) {
   app2.post("/sessions/:sid/summarize", async (req, reply) => {
     const sid = req.params.sid;
-    let lectureId;
-    for (const [lecId, sessions] of mem.sessions.entries()) {
-      if (sessions.some((s) => s.id === sid)) {
-        lectureId = lecId;
-        break;
-      }
-    }
-    if (!lectureId) return reply.code(404).send({ ok: false, error: "session not found" });
-    const decks2 = listDecksByLecture(lectureId);
-    if (decks2.length === 0) return reply.code(400).send({ ok: false, error: "no slides" });
-    const deck = decks2[decks2.length - 1];
+    const context = await findSessionById(sid);
+    if (!context) return reply.code(404).send({ ok: false, error: "session not found" });
+    const { lectureId } = context;
     const paragraphs2 = getParagraphs(sid);
     if (paragraphs2.length === 0) return reply.code(400).send({ ok: false, error: "no transcript paragraphs" });
-    const alignments2 = getAlignments(sid);
-    const coverage = Number((alignments2.length / Math.max(1, paragraphs2.length)).toFixed(4));
-    const avgAlignScore = alignments2.length === 0 ? 0 : Number((alignments2.reduce((acc, cur) => acc + cur.score, 0) / alignments2.length).toFixed(4));
-    const input = {
-      sessionId: sid,
-      deckId: deck.id,
-      paragraphs: paragraphs2.map((p) => ({ id: p.id, text: p.text, startMs: p.startMs, endMs: p.endMs })),
-      slides: deck.pages.map((p) => ({ deckId: deck.id, page: p.page, text: p.text })),
-      alignments: alignments2.map((a) => ({ paraId: a.paraId, slidePage: a.slidePage, deckId: a.deckId, score: a.score })),
-      coverage,
-      avgAlignScore
-    };
-    const summarized = await summarizeWithEvidence(input);
-    const evidenceCount = summarized.items.filter((item) => (item.evidence_ids?.length ?? 0) > 0).length;
-    const evidenceCoverage = summarized.items.length === 0 ? 0 : Number((evidenceCount / summarized.items.length).toFixed(4));
-    const hallucinationRate = Number((1 - evidenceCoverage).toFixed(4));
-    const report = {
-      sessionId: sid,
-      deckId: deck.id,
-      items: summarized.items.map((item) => SummaryItemSchema.parse(item)),
-      metrics: {
+    const decks2 = listDecksByLecture(lectureId);
+    const hasSlides = decks2.length > 0;
+    const deck = hasSlides ? decks2[decks2.length - 1] : null;
+    let input, report;
+    if (hasSlides && deck) {
+      const alignments2 = getAlignments(sid);
+      const coverage = Number((alignments2.length / Math.max(1, paragraphs2.length)).toFixed(4));
+      const avgAlignScore = alignments2.length === 0 ? 0 : Number((alignments2.reduce((acc, cur) => acc + cur.score, 0) / alignments2.length).toFixed(4));
+      input = {
+        sessionId: sid,
+        deckId: deck.id,
+        paragraphs: paragraphs2.map((p) => ({ id: p.id, text: p.text, startMs: p.startMs, endMs: p.endMs })),
+        slides: deck.pages.map((p) => ({ deckId: deck.id, page: p.page, text: p.text })),
+        alignments: alignments2.map((a) => ({ paraId: a.paraId, slidePage: a.slidePage, deckId: a.deckId, score: a.score })),
         coverage,
-        avgAlignScore,
-        evidenceCoverage,
-        hallucinationRate
-      },
-      createdAt: Date.now()
-    };
+        avgAlignScore
+      };
+      const summarized = await summarizeWithEvidence(input);
+      const evidenceCount = summarized.items.filter((item) => (item.evidence_ids?.length ?? 0) > 0).length;
+      const evidenceCoverage = summarized.items.length === 0 ? 0 : Number((evidenceCount / summarized.items.length).toFixed(4));
+      const hallucinationRate = Number((1 - evidenceCoverage).toFixed(4));
+      report = {
+        sessionId: sid,
+        deckId: deck.id,
+        items: summarized.items.map((item) => SummaryItemSchema.parse(item)),
+        metrics: {
+          coverage,
+          avgAlignScore,
+          evidenceCoverage,
+          hallucinationRate
+        },
+        createdAt: Date.now()
+      };
+    } else {
+      input = {
+        sessionId: sid,
+        deckId: "no-slides",
+        paragraphs: paragraphs2.map((p) => ({ id: p.id, text: p.text, startMs: p.startMs, endMs: p.endMs })),
+        slides: [],
+        alignments: [],
+        coverage: 0,
+        avgAlignScore: 0
+      };
+      const summarized = await summarizeWithEvidence(input);
+      report = {
+        sessionId: sid,
+        deckId: "no-slides",
+        items: summarized.items.map((item) => SummaryItemSchema.parse(item)),
+        metrics: {
+          coverage: 0,
+          avgAlignScore: 0,
+          evidenceCoverage: 0,
+          hallucinationRate: 1
+        },
+        createdAt: Date.now()
+      };
+    }
     saveSummary(report);
     return ApiResponse4(report);
   });
@@ -481,32 +564,38 @@ await registerSummaryRoutes(app);
 app.post("/lectures", async (req, reply) => {
   const body = CreateLectureDTO.safeParse(req.body);
   if (!body.success) return reply.code(400).send({ ok: false, error: body.error });
-  const lec = createLecture(body.data.title);
+  const lec = await createLecture(body.data.title);
   return ApiResponse5(lec);
 });
-app.get("/lectures", async () => ApiResponse5(Array.from(mem.lectures.values())));
+app.get("/lectures", async () => {
+  const lectures = await getAllLectures();
+  return ApiResponse5(lectures);
+});
 app.post("/lectures/:id/sessions", async (req, reply) => {
   const params = RouteParamsSchemas2.lectureId.safeParse(req.params);
   if (!params.success) return reply.code(400).send({ ok: false, error: "Invalid lecture ID" });
   const { id } = params.data;
-  if (!mem.lectures.has(id)) return reply.code(404).send({ ok: false, error: "lecture not found" });
+  const lecture = await prisma.lecture.findUnique({ where: { id } });
+  if (!lecture) return reply.code(404).send({ ok: false, error: "lecture not found" });
   const body = CreateSessionDTO.safeParse(req.body ?? {});
   if (!body.success) return reply.code(400).send({ ok: false, error: body.error });
-  const sess = createSession(id, body.data);
+  const sess = await createSession(id, body.data);
   return ApiResponse5(sess);
 });
 app.get("/lectures/:id/sessions", async (req, reply) => {
   const params = RouteParamsSchemas2.lectureId.safeParse(req.params);
   if (!params.success) return reply.code(400).send({ ok: false, error: "Invalid lecture ID" });
   const { id } = params.data;
-  if (!mem.lectures.has(id)) return reply.code(404).send({ ok: false, error: "lecture not found" });
-  return ApiResponse5(mem.sessions.get(id) ?? []);
+  const lecture = await prisma.lecture.findUnique({ where: { id } });
+  if (!lecture) return reply.code(404).send({ ok: false, error: "lecture not found" });
+  const sessions = await getSessionsByLectureId(id);
+  return ApiResponse5(sessions);
 });
 app.get("/sessions/:sid", async (req, reply) => {
   const params = RouteParamsSchemas2.sessionId.safeParse(req.params);
   if (!params.success) return reply.code(400).send({ ok: false, error: "Invalid session ID" });
   const { sid } = params.data;
-  const context = findSessionById(sid);
+  const context = await findSessionById(sid);
   if (!context) {
     return reply.code(404).send({ ok: false, error: "session not found" });
   }
@@ -516,7 +605,8 @@ app.get("/sessions/:sid/segments", async (req, reply) => {
   const params = RouteParamsSchemas2.sessionId.safeParse(req.params);
   if (!params.success) return reply.code(400).send({ ok: false, error: "Invalid session ID" });
   const { sid } = params.data;
-  return ApiResponse5(getSegments(sid));
+  const segments = await getSegments(sid);
+  return ApiResponse5(segments);
 });
 app.patch("/lectures/:id/sessions/:sid", async (req, reply) => {
   const params = RouteParamsSchemas2.lectureAndSession.safeParse(req.params);
@@ -524,7 +614,7 @@ app.patch("/lectures/:id/sessions/:sid", async (req, reply) => {
   const { id, sid } = params.data;
   const body = PatchSessionDTO.safeParse(req.body ?? {});
   if (!body.success) return reply.code(400).send({ ok: false, error: body.error });
-  const updated = patchSession(id, sid, body.data);
+  const updated = await patchSession(id, sid, body.data);
   if (!updated) return reply.code(404).send({ ok: false, error: "session not found" });
   return ApiResponse5(updated);
 });
@@ -532,7 +622,7 @@ app.delete("/lectures/:id/sessions/:sid", async (req, reply) => {
   const params = RouteParamsSchemas2.lectureAndSession.safeParse(req.params);
   if (!params.success) return reply.code(400).send({ ok: false, error: "Invalid lecture or session ID" });
   const { id, sid } = params.data;
-  const deleted = deleteSession(id, sid);
+  const deleted = await deleteSession(id, sid);
   if (!deleted) return reply.code(404).send({ ok: false, error: "session not found" });
   return ApiResponse5({ deleted: true, sessionId: sid });
 });
@@ -540,15 +630,19 @@ app.post("/sessions/:sid/ingest", async (req, reply) => {
   const params = RouteParamsSchemas2.sessionId.safeParse(req.params);
   if (!params.success) return reply.code(400).send({ ok: false, error: "Invalid session ID" });
   const { sid } = params.data;
-  const context = findSessionById(sid);
+  const context = await findSessionById(sid);
   if (!context) {
     return reply.code(404).send({ ok: false, error: "session not found" });
   }
   const { lectureId, session } = context;
-  const segments = getSegments(sid);
+  const segments = await getSegments(sid);
   if (segments.length === 0) {
     return reply.code(400).send({ ok: false, error: "no segments to process" });
   }
+  await prisma.session.update({
+    where: { id: sid },
+    data: { status: "processing" }
+  });
   session.status = "processing";
   markProcessingJobs(sid, segments.length);
   const jobs = [];
@@ -588,7 +682,7 @@ app.post("/sessions/:sid/transcription-result", async (req, reply) => {
   if (body.data.paragraphs.length > 0) {
     appendParagraphs(sid, body.data.paragraphs);
   }
-  const remainingJobs = resolveProcessingJob(sid);
+  const remainingJobs = await resolveProcessingJob(sid);
   return ApiResponse5({
     remainingJobs
   });
@@ -597,8 +691,9 @@ app.get("/lectures/:id/status", async (req, reply) => {
   const params = RouteParamsSchemas2.lectureId.safeParse(req.params);
   if (!params.success) return reply.code(400).send({ ok: false, error: "Invalid lecture ID" });
   const { id } = params.data;
-  if (!mem.lectures.has(id)) return reply.code(404).send({ ok: false, error: "lecture not found" });
-  const sessions = mem.sessions.get(id) ?? [];
+  const lecture = await prisma.lecture.findUnique({ where: { id } });
+  if (!lecture) return reply.code(404).send({ ok: false, error: "lecture not found" });
+  const sessions = await getSessionsByLectureId(id);
   const counts = sessions.reduce((acc, s) => {
     acc[s.status] = (acc[s.status] ?? 0) + 1;
     return acc;
@@ -611,6 +706,8 @@ ${signal} received. Starting graceful shutdown...`);
   try {
     await app.close();
     console.log("\u2705 Fastify server closed");
+    await prisma.$disconnect();
+    console.log("\u2705 Prisma disconnected");
     await connection.quit();
     console.log("\u2705 Redis connection closed");
     console.log("\u2705 Graceful shutdown completed");

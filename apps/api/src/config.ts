@@ -27,7 +27,9 @@ function getRequiredEnv(key: string): string {
 }
 
 function getOptionalEnv(key: string, defaultValue: string): string {
-  return process.env[key] || defaultValue;
+  const value = process.env[key];
+  // Return default if value is undefined, null, or empty string
+  return value && value.trim() !== '' ? value : defaultValue;
 }
 
 function validateConfig(): AppConfig {
