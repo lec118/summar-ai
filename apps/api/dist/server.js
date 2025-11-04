@@ -311,9 +311,18 @@ async function registerSlidesRoutes(app2) {
     const titleValue = Array.isArray(getTitleField) ? getTitleField[0] : getTitleField;
     const title = (titleValue && typeof titleValue === "object" && "value" in titleValue ? String(titleValue.value) : mp.filename) || "Slides";
     if (!lectureId) return reply.code(400).send({ ok: false, error: "missing lectureId" });
+    const sanitizeFilename = (filename) => {
+      return filename.replace(/[\/\\:*?"<>|]/g, "_").replace(/\.\./g, "_");
+    };
     const uploadDir = path2.join(process.cwd(), "uploads", "slides");
     fs2.mkdirSync(uploadDir, { recursive: true });
-    const fpath = path2.join(uploadDir, `${Date.now()}_${mp.filename}`);
+    const safeFilename = sanitizeFilename(mp.filename);
+    const fpath = path2.join(uploadDir, `${Date.now()}_${safeFilename}`);
+    const resolvedPath = path2.resolve(fpath);
+    const resolvedUploadDir = path2.resolve(uploadDir);
+    if (!resolvedPath.startsWith(resolvedUploadDir)) {
+      return reply.code(400).send({ ok: false, error: "Invalid file path" });
+    }
     await fs2.promises.writeFile(fpath, await mp.toBuffer());
     console.log("[Slides Upload] Using text-only extraction...");
     const pages = await extractPagesFromPDF(fpath);
@@ -419,7 +428,7 @@ function getSummary(sessionId) {
 // src/summary.routes.ts
 async function registerSummaryRoutes(app2) {
   app2.post("/sessions/:sid/summarize", async (req, reply) => {
-    const sid = req.params.sid;
+    const { sid } = req.params;
     const context = await findSessionById(sid);
     if (!context) return reply.code(404).send({ ok: false, error: "session not found" });
     const { lectureId } = context;

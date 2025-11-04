@@ -7,9 +7,13 @@ import { getParagraphs, getAlignments } from "./db_transcript.js";
 import { summarizeWithEvidence } from "@summa/summarizer";
 import { saveSummary, getSummary } from "./db_summary.js";
 
+interface SessionParams {
+  sid: string;
+}
+
 export async function registerSummaryRoutes(app: FastifyInstance) {
-  app.post("/sessions/:sid/summarize", async (req, reply) => {
-    const sid = (req.params as any).sid as string;
+  app.post<{ Params: SessionParams }>("/sessions/:sid/summarize", async (req, reply) => {
+    const { sid } = req.params;
 
     const context = await findSessionById(sid);
     if (!context) return reply.code(404).send({ ok: false, error: "session not found" });

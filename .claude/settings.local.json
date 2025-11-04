@@ -76,7 +76,11 @@
       "Bash(redis-cli:*)",
       "Bash(where:*)",
       "Bash(vercel link:*)",
-      "Bash(apps/web/README.md)"
+      "Bash(apps/web/README.md)",
+      "Bash(README.md)",
+      "Bash(render:*)",
+      "Bash(printf:*)",
+      "Bash(/tmp/report.md)"
     ],
     "deny": [],
     "ask": []

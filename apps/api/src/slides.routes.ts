@@ -23,9 +23,24 @@ export async function registerSlidesRoutes(app: FastifyInstance) {
 
     if (!lectureId) return reply.code(400).send({ ok:false, error:"missing lectureId" });
 
+    // Sanitize filename to prevent directory traversal attacks
+    const sanitizeFilename = (filename: string): string => {
+      return filename.replace(/[\/\\:*?"<>|]/g, '_').replace(/\.\./g, '_');
+    };
+
     const uploadDir = path.join(process.cwd(), "uploads", "slides");
     fs.mkdirSync(uploadDir, { recursive: true });
-    const fpath = path.join(uploadDir, `${Date.now()}_${mp.filename}`);
+
+    const safeFilename = sanitizeFilename(mp.filename);
+    const fpath = path.join(uploadDir, `${Date.now()}_${safeFilename}`);
+
+    // Verify the resolved path is within uploadDir
+    const resolvedPath = path.resolve(fpath);
+    const resolvedUploadDir = path.resolve(uploadDir);
+    if (!resolvedPath.startsWith(resolvedUploadDir)) {
+      return reply.code(400).send({ ok: false, error: "Invalid file path" });
+    }
+
     await fs.promises.writeFile(fpath, await mp.toBuffer());
 
     // Use text-only extraction (Vision API temporarily disabled)
