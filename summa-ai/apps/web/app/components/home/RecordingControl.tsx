@@ -182,7 +182,7 @@ export function RecordingControl({
               display: "flex",
               flexDirection: "column",
               alignItems: "center",
-              gap: 24,
+              gap: 32,
               padding: "32px",
             }}
           >

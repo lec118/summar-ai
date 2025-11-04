@@ -15,48 +15,80 @@ export async function registerSummaryRoutes(app: FastifyInstance) {
     if (!context) return reply.code(404).send({ ok: false, error: "session not found" });
     const { lectureId } = context;
 
-    const decks = listDecksByLecture(lectureId);
-    if (decks.length === 0) return reply.code(400).send({ ok: false, error: "no slides" });
-    const deck = decks[decks.length - 1];
-
     const paragraphs = getParagraphs(sid);
     if (paragraphs.length === 0) return reply.code(400).send({ ok: false, error: "no transcript paragraphs" });
 
-    const alignments = getAlignments(sid);
-    const coverage = Number((alignments.length / Math.max(1, paragraphs.length)).toFixed(4));
-    const avgAlignScore = alignments.length === 0
-      ? 0
-      : Number((alignments.reduce((acc, cur) => acc + cur.score, 0) / alignments.length).toFixed(4));
+    // Check if slides exist (optional)
+    const decks = listDecksByLecture(lectureId);
+    const hasSlides = decks.length > 0;
+    const deck = hasSlides ? decks[decks.length - 1] : null;
 
-    const input = {
-      sessionId: sid,
-      deckId: deck.id,
-      paragraphs: paragraphs.map(p => ({ id: p.id, text: p.text, startMs: p.startMs, endMs: p.endMs })),
-      slides: deck.pages.map(p => ({ deckId: deck.id, page: p.page, text: p.text })),
-      alignments: alignments.map(a => ({ paraId: a.paraId, slidePage: a.slidePage, deckId: a.deckId, score: a.score })),
-      coverage,
-      avgAlignScore
-    };
+    let input, report: SummaryReportType;
 
-    const summarized = await summarizeWithEvidence(input);
-    const evidenceCount = summarized.items.filter(item => (item.evidence_ids?.length ?? 0) > 0).length;
-    const evidenceCoverage = summarized.items.length === 0
-      ? 0
-      : Number((evidenceCount / summarized.items.length).toFixed(4));
-    const hallucinationRate = Number((1 - evidenceCoverage).toFixed(4));
+    if (hasSlides && deck) {
+      // With slides: advanced summary with evidence
+      const alignments = getAlignments(sid);
+      const coverage = Number((alignments.length / Math.max(1, paragraphs.length)).toFixed(4));
+      const avgAlignScore = alignments.length === 0
+        ? 0
+        : Number((alignments.reduce((acc, cur) => acc + cur.score, 0) / alignments.length).toFixed(4));
 
-    const report: SummaryReportType = {
-      sessionId: sid,
-      deckId: deck.id,
-      items: summarized.items.map(item => SummaryItemSchema.parse(item)),
-      metrics: {
+      input = {
+        sessionId: sid,
+        deckId: deck.id,
+        paragraphs: paragraphs.map(p => ({ id: p.id, text: p.text, startMs: p.startMs, endMs: p.endMs })),
+        slides: deck.pages.map(p => ({ deckId: deck.id, page: p.page, text: p.text })),
+        alignments: alignments.map(a => ({ paraId: a.paraId, slidePage: a.slidePage, deckId: a.deckId, score: a.score })),
         coverage,
-        avgAlignScore,
-        evidenceCoverage,
-        hallucinationRate
-      },
-      createdAt: Date.now()
-    };
+        avgAlignScore
+      };
+
+      const summarized = await summarizeWithEvidence(input);
+      const evidenceCount = summarized.items.filter(item => (item.evidence_ids?.length ?? 0) > 0).length;
+      const evidenceCoverage = summarized.items.length === 0
+        ? 0
+        : Number((evidenceCount / summarized.items.length).toFixed(4));
+      const hallucinationRate = Number((1 - evidenceCoverage).toFixed(4));
+
+      report = {
+        sessionId: sid,
+        deckId: deck.id,
+        items: summarized.items.map(item => SummaryItemSchema.parse(item)),
+        metrics: {
+          coverage,
+          avgAlignScore,
+          evidenceCoverage,
+          hallucinationRate
+        },
+        createdAt: Date.now()
+      };
+    } else {
+      // Without slides: basic summary from transcript only
+      input = {
+        sessionId: sid,
+        deckId: "no-slides",
+        paragraphs: paragraphs.map(p => ({ id: p.id, text: p.text, startMs: p.startMs, endMs: p.endMs })),
+        slides: [],
+        alignments: [],
+        coverage: 0,
+        avgAlignScore: 0
+      };
+
+      const summarized = await summarizeWithEvidence(input);
+
+      report = {
+        sessionId: sid,
+        deckId: "no-slides",
+        items: summarized.items.map(item => SummaryItemSchema.parse(item)),
+        metrics: {
+          coverage: 0,
+          avgAlignScore: 0,
+          evidenceCoverage: 0,
+          hallucinationRate: 1
+        },
+        createdAt: Date.now()
+      };
+    }
 
     saveSummary(report);
     return ApiResponse(report);
