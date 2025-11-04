@@ -10,29 +10,64 @@ export interface LLMAdapter {
 export class OpenAILLM implements LLMAdapter {
   async summarize({ prompt, model }: { prompt: string; model?: string; }): Promise<string> {
     const apiKey = process.env.OPENAI_API_KEY!;
-    const m = model ?? process.env.SUMM_OPENAI_MODEL ?? "gpt-5-turbo";
-    const res = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: m,
-        messages: [
-          { role: "system", content: "You are a summarization model that MUST cite slide evidence IDs for every bullet. Output JSON only." },
-          { role: "user", content: prompt }
-        ],
-        temperature: 0.2
-      })
-    });
+    // Default to gpt-4o-mini for cost efficiency, fallback to gpt-4o if it fails
+    const primaryModel = model ?? process.env.SUMM_OPENAI_MODEL ?? "gpt-4o-mini";
+    const fallbackModel = "gpt-4o";
 
-    if (!res.ok) {
-      throw new Error(`OpenAI summarize error ${res.status}: ${await res.text()}`);
+    try {
+      // Try with primary model (gpt-4o-mini)
+      const res = await fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: primaryModel,
+          messages: [
+            { role: "system", content: "You are a summarization model that MUST cite slide evidence IDs for every bullet. Output JSON only." },
+            { role: "user", content: prompt }
+          ],
+          temperature: 0.2
+        })
+      });
+
+      if (!res.ok) {
+        const errorText = await res.text();
+        console.warn(`OpenAI ${primaryModel} failed (${res.status}): ${errorText}`);
+
+        // Try fallback model (gpt-4o)
+        console.log(`Falling back to ${fallbackModel}...`);
+        const fallbackRes = await fetch("https://api.openai.com/v1/chat/completions", {
+          method: "POST",
+          headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+          body: JSON.stringify({
+            model: fallbackModel,
+            messages: [
+              { role: "system", content: "You are a summarization model that MUST cite slide evidence IDs for every bullet. Output JSON only." },
+              { role: "user", content: prompt }
+            ],
+            temperature: 0.2
+          })
+        });
+
+        if (!fallbackRes.ok) {
+          throw new Error(`OpenAI fallback ${fallbackModel} error ${fallbackRes.status}: ${await fallbackRes.text()}`);
+        }
+
+        const fallbackData = (await fallbackRes.json()) as {
+          choices: Array<{ message?: { content?: string } }>;
+        };
+
+        return fallbackData.choices[0]?.message?.content ?? "";
+      }
+
+      const data = (await res.json()) as {
+        choices: Array<{ message?: { content?: string } }>;
+      };
+
+      return data.choices[0]?.message?.content ?? "";
+    } catch (error) {
+      console.error("OpenAI summarize error:", error);
+      throw error;
     }
-
-    const data = (await res.json()) as {
-      choices: Array<{ message?: { content?: string } }>;
-    };
-
-    return data.choices[0]?.message?.content ?? "";
   }
 }
 
