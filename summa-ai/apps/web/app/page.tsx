@@ -120,16 +120,12 @@ export default function Home() {
             recording={recording.recording}
             paused={recording.paused}
             pending={pending}
-            uploadingFile={fileUpload.uploadingFile}
             recordingCompleted={recording.recordingCompleted}
-            fileUploaded={fileUpload.fileUploaded}
             currentSessionId={currentSessionId}
-            fileInputRef={fileUpload.fileInputRef}
             onStartRecording={recording.startRecording}
             onPauseRecording={recording.pauseRecording}
             onResumeRecording={recording.resumeRecording}
             onStopRecording={recording.stopRecording}
-            onFileSelect={fileUpload.handleFileSelect}
           />
         </>
       )}

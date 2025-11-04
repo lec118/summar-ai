@@ -5,32 +5,24 @@ interface RecordingControlProps {
   recording: boolean;
   paused: boolean;
   pending: boolean;
-  uploadingFile: boolean;
   recordingCompleted: boolean;
-  fileUploaded: boolean;
   currentSessionId: string | null;
-  fileInputRef: React.RefObject<HTMLInputElement>;
   onStartRecording: () => void;
   onPauseRecording: () => void;
   onResumeRecording: () => void;
   onStopRecording: () => void;
-  onFileSelect: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
 export function RecordingControl({
   recording,
   paused,
   pending,
-  uploadingFile,
   recordingCompleted,
-  fileUploaded,
   currentSessionId,
-  fileInputRef,
   onStartRecording,
   onPauseRecording,
   onResumeRecording,
   onStopRecording,
-  onFileSelect,
 }: RecordingControlProps) {
   const router = useRouter();
 
@@ -44,47 +36,6 @@ export function RecordingControl({
         position: "relative",
       }}
     >
-      {/* Educational Materials Upload - Top Right Inside Frame */}
-      <button
-        disabled={recording && !paused}
-        onClick={() => fileInputRef.current?.click()}
-        style={{
-          position: "absolute",
-          top: 20,
-          right: 20,
-          padding: "10px 18px",
-          background: "rgba(255,255,255,0.2)",
-          backdropFilter: "blur(10px)",
-          color: "#fff",
-          borderRadius: 10,
-          border: "1px solid rgba(255,255,255,0.3)",
-          cursor: recording && !paused ? "not-allowed" : "pointer",
-          fontSize: 14,
-          fontWeight: 600,
-          opacity: recording && !paused ? 0.5 : 1,
-          transition: "all 0.2s",
-          display: "flex",
-          alignItems: "center",
-          gap: 8,
-        }}
-        onMouseEnter={(e) => {
-          if (!(recording && !paused)) {
-            e.currentTarget.style.background = "rgba(255,255,255,0.3)";
-          }
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.background = "rgba(255,255,255,0.2)";
-        }}
-      >
-        📚 교육 자료 업로드
-      </button>
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="audio/*,video/*,application/pdf"
-        onChange={onFileSelect}
-        style={{ display: "none" }}
-      />
 
       <div
         style={{
@@ -106,7 +57,7 @@ export function RecordingControl({
             }}
           >
             🎙️ 1단계: 음성 녹음
-            {(recordingCompleted || fileUploaded) && (
+            {recordingCompleted && (
               <span
                 style={{
                   padding: "6px 16px",
@@ -126,19 +77,6 @@ export function RecordingControl({
         </div>
       </div>
 
-      {uploadingFile && (
-        <p
-          style={{
-            color: "#ffd700",
-            marginBottom: 16,
-            fontSize: 14,
-            fontWeight: 600,
-          }}
-        >
-          ⏳ 파일 업로드 중...
-        </p>
-      )}
-
       <div
         style={{
           display: "flex",
@@ -148,7 +86,7 @@ export function RecordingControl({
         }}
       >
         {/* Stage 1: Recording completed - show next step button */}
-        {recordingCompleted || fileUploaded ? (
+        {recordingCompleted ? (
           <div
             style={{
               padding: "32px 48px",
@@ -199,7 +137,7 @@ export function RecordingControl({
         ) : !recording ? (
           /* Stage 0: Not recording - show start button */
           <button
-            disabled={pending || uploadingFile}
+            disabled={pending}
             onClick={onStartRecording}
             style={{
               padding: "48px 64px",
@@ -207,7 +145,7 @@ export function RecordingControl({
               color: "#fff",
               borderRadius: 20,
               border: "none",
-              cursor: pending || uploadingFile ? "not-allowed" : "pointer",
+              cursor: pending ? "not-allowed" : "pointer",
               fontSize: 16,
               fontWeight: 700,
               display: "flex",
@@ -216,11 +154,11 @@ export function RecordingControl({
               justifyContent: "center",
               transition: "all 0.3s",
               boxShadow: "0 8px 24px rgba(0,0,0,0.4)",
-              opacity: pending || uploadingFile ? 0.5 : 1,
+              opacity: pending ? 0.5 : 1,
               minWidth: 320,
             }}
             onMouseEnter={(e) => {
-              if (!pending && !uploadingFile) {
+              if (!pending) {
                 e.currentTarget.style.transform = "scale(1.05)";
                 e.currentTarget.style.boxShadow =
                   "0 12px 32px rgba(0,0,0,0.5)";

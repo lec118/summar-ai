@@ -33,7 +33,11 @@ export default function SessionDetailPage({
   const { session, setSession, segments, transcript, setTranscript, summary, setSummary, loading, error, setError } = useSessionData(sessionId);
   useSessionPolling(sessionId, session, setSession, setTranscript);
   const { transcribing, transcriptionStep, successMessage, startTranscription } = useTranscription(sessionId, session, setSession, setError);
+  const { uploadingSlides, uploadSlides } = useSlidesUpload(sessionId, setError);
   const { summarizing, generateSummary } = useSummaryGeneration(sessionId, setSummary, setError);
+
+  // File input ref for slides upload
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Auto-start transcription if requested
   useEffect(() => {
@@ -186,6 +190,13 @@ export default function SessionDetailPage({
         />
         <StepCard
           number={3}
+          title="교육자료 업로드"
+          completed={false}
+          active={false}
+          optional
+        />
+        <StepCard
+          number={4}
           title="요약 생성"
           completed={!!summary}
           active={summarizing}
@@ -398,9 +409,53 @@ export default function SessionDetailPage({
         )}
       </Section>
 
-      {/* Step 3: Summary Generation */}
+      {/* Step 3: Slides Upload (Optional) */}
       <Section
-        title="📝 Step 3: 요약 생성"
+        title="📚 Step 3: 교육자료 업로드 (선택사항)"
+        completed={false}
+        active={false}
+      >
+        <p style={{ opacity: 0.8, marginBottom: 16 }}>
+          PDF, PowerPoint 등의 교육 자료를 업로드하면 더 정확한 요약을 생성할 수 있습니다.
+        </p>
+
+        {isTranscriptReady && (
+          <>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="application/pdf,.pdf,.ppt,.pptx,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) uploadSlides(file);
+              }}
+              style={{ display: "none" }}
+            />
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploadingSlides}
+              style={{
+                ...btnLarge,
+                opacity: uploadingSlides ? 0.5 : 1,
+                cursor: uploadingSlides ? "not-allowed" : "pointer",
+              }}
+            >
+              <span style={{ fontSize: 32, marginBottom: 8 }}>📤</span>
+              <span>{uploadingSlides ? "업로드 중..." : "교육 자료 업로드"}</span>
+            </button>
+          </>
+        )}
+
+        {!isTranscriptReady && (
+          <p style={{ opacity: 0.6, fontSize: 14 }}>
+            ⚠️ 텍스트 변환을 먼저 완료해주세요.
+          </p>
+        )}
+      </Section>
+
+      {/* Step 4: Summary Generation */}
+      <Section
+        title="📝 Step 4: 요약 생성"
         completed={!!summary}
         active={summarizing}
       >
