@@ -5,7 +5,7 @@ services:
     runtime: node
     region: oregon
     plan: free
-    buildCommand: pnpm install && cd apps/api && pnpm prisma generate && cd ../.. && pnpm -r build
+    buildCommand: rm -rf apps/api/dist && pnpm install && cd apps/api && pnpm prisma generate && cd ../.. && pnpm -r build
     startCommand: cd apps/api && pnpm prisma migrate deploy && pnpm start:all
     envVars:
       - key: NODE_VERSION
@@ -39,7 +39,7 @@ services:
     runtime: node
     region: oregon
     plan: free
-    buildCommand: pnpm install && cd apps/api && pnpm prisma generate && cd ../.. && pnpm -r build
+    buildCommand: rm -rf apps/api/dist && pnpm install && cd apps/api && pnpm prisma generate && cd ../.. && pnpm -r build
     startCommand: cd apps/api && pnpm start:worker
     envVars:
       - key: NODE_VERSION
