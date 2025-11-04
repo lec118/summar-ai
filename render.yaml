@@ -5,32 +5,38 @@ services:
     runtime: node
     region: oregon
     plan: free
-    buildCommand: cd summa-ai && corepack enable && corepack prepare pnpm@latest --activate && pnpm install && pnpm --filter @summa/shared build && pnpm --filter @summa/web build
-    startCommand: cd summa-ai/apps/web && pnpm start
+    rootDir: summa-ai
+    buildCommand: pnpm install && pnpm -r build
+    startCommand: cd apps/web && pnpm start
     envVars:
       - key: NODE_VERSION
-        value: 20
+        value: 18
       - key: NEXT_PUBLIC_API_URL
         fromService:
           type: web
           name: summa-api
           envVarKey: RENDER_EXTERNAL_URL
 
-  # Fastify API Server + Worker (combined for free plan)
+  # Fastify API Server
   - type: web
     name: summa-api
     runtime: node
     region: oregon
     plan: free
-    buildCommand: cd summa-ai && corepack enable && corepack prepare pnpm@latest --activate && pnpm install && pnpm --filter @summa/shared build && pnpm --filter @summa/stt build && pnpm --filter @summa/embeddings build && pnpm --filter @summa/slides build && pnpm --filter @summa/summarizer build
-    startCommand: cd summa-ai/apps/api && pnpm start:prod
+    rootDir: summa-ai
+    buildCommand: pnpm install && cd apps/api && prisma generate && cd ../.. && pnpm -r build
+    startCommand: cd apps/api && prisma migrate deploy && pnpm start:all
     envVars:
       - key: NODE_VERSION
-        value: 20
+        value: 18
       - key: PORT
         value: 10000
-      - key: REDIS_URL
+      - key: DATABASE_URL
         sync: false
+      - key: REDIS_URL
+        fromDatabase:
+          name: summa-redis
+          property: connectionString
       - key: OPENAI_API_KEY
         sync: false
       - key: OPENAI_STT_MODEL
@@ -41,5 +47,53 @@ services:
         value: openai
       - key: SUMM_OPENAI_MODEL
         value: gpt-4-turbo
+      - key: NODE_ENV
+        value: production
       - key: ALLOWED_ORIGINS
-        value: https://summa-ai-eight.vercel.app,http://localhost:3000,http://localhost:3001
+        fromService:
+          type: web
+          name: summa-web
+          envVarKey: RENDER_EXTERNAL_URL
+
+  # Worker Service (Background Jobs)
+  - type: worker
+    name: summa-worker
+    runtime: node
+    region: oregon
+    plan: free
+    rootDir: summa-ai
+    buildCommand: pnpm install && cd apps/api && prisma generate && cd ../.. && pnpm -r build
+    startCommand: cd apps/api && pnpm start:worker
+    envVars:
+      - key: NODE_VERSION
+        value: 18
+      - key: DATABASE_URL
+        sync: false
+      - key: REDIS_URL
+        fromDatabase:
+          name: summa-redis
+          property: connectionString
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: OPENAI_STT_MODEL
+        value: whisper-1
+      - key: OPENAI_EMBEDDING_MODEL
+        value: text-embedding-3-large
+      - key: SUMM_LLM
+        value: openai
+      - key: SUMM_OPENAI_MODEL
+        value: gpt-4-turbo
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 4000
+      - key: API_INTERNAL_URL
+        value: http://localhost:10000
+
+databases:
+  # Redis for job queues
+  - name: summa-redis
+    region: oregon
+    plan: free
+    databaseName: summa
+    user: summa
