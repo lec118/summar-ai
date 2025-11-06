@@ -1,6 +1,21 @@
 import type { ApiResponseType } from "@summa/shared";
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+// Environment variable validation
+function getApiBaseUrl(): string {
+  const url = process.env.NEXT_PUBLIC_API_URL;
+
+  // In production, API URL must be explicitly set
+  if (typeof window !== "undefined" && process.env.NODE_ENV === "production") {
+    if (!url || url === "http://localhost:4000") {
+      console.error("❌ NEXT_PUBLIC_API_URL is not set for production!");
+      throw new Error("API URL configuration error. Please contact support.");
+    }
+  }
+
+  return url || "http://localhost:4000";
+}
+
+const BASE_URL = getApiBaseUrl();
 
 // Note: API routes do NOT have an /api prefix
 // Routes are: /lectures, /sessions, etc.

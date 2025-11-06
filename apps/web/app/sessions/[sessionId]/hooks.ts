@@ -16,20 +16,8 @@ export function useSessionData(sessionId: string) {
         setLoading(true);
         setError(null);
 
-        // Find session by iterating through lectures
-        const lecturesRes = await apiRequest<any[]>("/lectures");
-        let foundSession: Session | null = null;
-
-        for (const lecture of lecturesRes) {
-          const sessionsRes = await apiRequest<Session[]>(
-            `/lectures/${lecture.id}/sessions`
-          );
-          const session = sessionsRes.find((s) => s.id === sessionId);
-          if (session) {
-            foundSession = session;
-            break;
-          }
-        }
+        // Directly fetch session by ID (optimized - no N+1 query)
+        const foundSession = await apiRequest<Session>(`/sessions/${sessionId}`);
 
         if (!foundSession) {
           setError("세션을 찾을 수 없습니다.");
@@ -101,21 +89,13 @@ export function useSessionPolling(
   useEffect(() => {
     if (!session || session.status !== "processing") return;
 
-    const interval = setInterval(async () => {
-      try {
-        const lecturesRes = await apiRequest<any[]>("/lectures");
-        let foundSession: Session | null = null;
+    // Poll only when page is visible
+    let interval: NodeJS.Timeout | null = null;
 
-        for (const lecture of lecturesRes) {
-          const sessionsRes = await apiRequest<Session[]>(
-            `/lectures/${lecture.id}/sessions`
-          );
-          const s = sessionsRes.find((s) => s.id === sessionId);
-          if (s) {
-            foundSession = s;
-            break;
-          }
-        }
+    const poll = async () => {
+      try {
+        // Directly fetch session - optimized (no N+1 query)
+        const foundSession = await apiRequest<Session>(`/sessions/${sessionId}`);
 
         if (foundSession) {
           setSession(foundSession);
@@ -133,9 +113,42 @@ export function useSessionPolling(
       } catch (err) {
         console.error("Error polling session status:", err);
       }
-    }, 5000);
+    };
 
-    return () => clearInterval(interval);
+    const startPolling = () => {
+      if (!interval) {
+        interval = setInterval(poll, 5000);
+      }
+    };
+
+    const stopPolling = () => {
+      if (interval) {
+        clearInterval(interval);
+        interval = null;
+      }
+    };
+
+    // Handle page visibility changes
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        stopPolling();
+      } else {
+        startPolling();
+        poll(); // Poll immediately when page becomes visible
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    // Start polling if page is visible
+    if (!document.hidden) {
+      startPolling();
+    }
+
+    return () => {
+      stopPolling();
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
   }, [session?.status, sessionId, setSession, setTranscript]);
 }
 

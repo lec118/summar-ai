@@ -135,6 +135,27 @@ export function useRecording(
   const [recordingTime, setRecordingTime] = useState(0);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Cleanup timer and media recorder on unmount
+  useEffect(() => {
+    return () => {
+      // Clear timer
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+
+      // Stop media recorder and release resources
+      if (mediaRecorder && mediaRecorder.state !== "inactive") {
+        try {
+          mediaRecorder.stop();
+          mediaRecorder.stream.getTracks().forEach((track) => track.stop());
+        } catch (err) {
+          console.error("Error cleaning up media recorder:", err);
+        }
+      }
+    };
+  }, [mediaRecorder]);
+
   async function startRecording(): Promise<void> {
     if (!activeLecture) {
       alert("먼저 강의를 선택하거나 생성하세요.");
@@ -151,6 +172,23 @@ export function useRecording(
 
       recorder.ondataavailable = (e) => {
         if (e.data.size > 0) chunks.push(e.data);
+      };
+
+      recorder.onerror = (event) => {
+        console.error("MediaRecorder error:", event);
+        alert("녹음 중 오류가 발생했습니다. 다시 시도해주세요.");
+
+        // Cleanup on error
+        stream.getTracks().forEach((track) => track.stop());
+        setMediaRecorder(null);
+        setRecording(false);
+        setPaused(false);
+
+        if (timerRef.current) {
+          clearInterval(timerRef.current);
+          timerRef.current = null;
+        }
+        setRecordingTime(0);
       };
 
       recorder.onstop = async () => {
