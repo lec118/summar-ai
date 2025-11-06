@@ -81,7 +81,8 @@
       "Bash(render:*)",
       "Bash(printf:*)",
       "Bash(/tmp/report.md)",
-      "Bash(gh api:*)"
+      "Bash(gh api:*)",
+      "Bash(PORT=3001 timeout:*)"
     ],
     "deny": [],
     "ask": []

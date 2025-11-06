@@ -135,7 +135,6 @@ export function useRecording(
   const [recordingTime, setRecordingTime] = useState(0);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const startTimeRef = useRef<number>(0);
-  const pausedTimeRef = useRef<number>(0);
 
   // Cleanup timer and media recorder on unmount
   useEffect(() => {
@@ -219,14 +218,13 @@ export function useRecording(
       recorder.start();
       setMediaRecorder(recorder);
       setRecording(true);
-      setRecordingTime(0);
 
       // Start timer using timestamp-based approach for accuracy
       startTimeRef.current = Date.now();
-      pausedTimeRef.current = 0;
+      setRecordingTime(0);
 
       timerRef.current = setInterval(() => {
-        const elapsed = Math.floor((Date.now() - startTimeRef.current - pausedTimeRef.current) / 1000);
+        const elapsed = Math.floor((Date.now() - startTimeRef.current) / 1000);
         setRecordingTime(elapsed);
       }, 100); // Update more frequently for smoother display
     } catch (err) {
@@ -240,10 +238,7 @@ export function useRecording(
       mediaRecorder.pause();
       setPaused(true);
 
-      // Save current time when paused
-      pausedTimeRef.current = Date.now();
-
-      // Stop timer
+      // Stop timer and save current time
       if (timerRef.current) {
         clearInterval(timerRef.current);
         timerRef.current = null;
@@ -256,9 +251,10 @@ export function useRecording(
       mediaRecorder.resume();
       setPaused(false);
 
-      // Adjust start time to skip the pause duration
-      const pauseDuration = Date.now() - pausedTimeRef.current;
-      startTimeRef.current += pauseDuration;
+      // Adjust start time to account for the pause (move start time forward)
+      const now = Date.now();
+      const currentElapsed = recordingTime * 1000; // Convert back to ms
+      startTimeRef.current = now - currentElapsed;
 
       timerRef.current = setInterval(() => {
         const elapsed = Math.floor((Date.now() - startTimeRef.current) / 1000);
