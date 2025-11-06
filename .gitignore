@@ -3,3 +3,19 @@ node_modules/
 
 # Vercel
 .vercel
+
+# Build outputs
+.next/
+dist/
+build/
+
+# Environment variables
+.env.local
+.env*.local
+
+# IDE
+.vscode/
+.idea/
+
+# Temporary/Archive files
+Delete/
