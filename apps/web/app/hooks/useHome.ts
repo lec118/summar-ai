@@ -132,6 +132,8 @@ export function useRecording(
   );
   const [recordingCompleted, setRecordingCompleted] = useState(false);
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
+  const [recordingTime, setRecordingTime] = useState(0);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   async function startRecording(): Promise<void> {
     if (!activeLecture) {
@@ -177,6 +179,12 @@ export function useRecording(
       recorder.start();
       setMediaRecorder(recorder);
       setRecording(true);
+      setRecordingTime(0);
+
+      // Start timer
+      timerRef.current = setInterval(() => {
+        setRecordingTime((prev) => prev + 1);
+      }, 1000);
     } catch (err) {
       console.error("Failed to start recording:", err);
       alert("마이크 접근에 실패했습니다. 브라우저 권한을 확인해주세요.");
@@ -187,6 +195,12 @@ export function useRecording(
     if (mediaRecorder && mediaRecorder.state === "recording") {
       mediaRecorder.pause();
       setPaused(true);
+
+      // Pause timer
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
     }
   }
 
@@ -194,6 +208,11 @@ export function useRecording(
     if (mediaRecorder && mediaRecorder.state === "paused") {
       mediaRecorder.resume();
       setPaused(false);
+
+      // Resume timer
+      timerRef.current = setInterval(() => {
+        setRecordingTime((prev) => prev + 1);
+      }, 1000);
     }
   }
 
@@ -203,6 +222,13 @@ export function useRecording(
       setMediaRecorder(null);
       setRecording(false);
       setPaused(false);
+
+      // Clear timer
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+      setRecordingTime(0);
     }
   }
 
@@ -211,6 +237,7 @@ export function useRecording(
     paused,
     recordingCompleted,
     currentSessionId,
+    recordingTime,
     setRecordingCompleted,
     setCurrentSessionId,
     startRecording,

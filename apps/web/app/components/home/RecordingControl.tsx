@@ -7,10 +7,22 @@ interface RecordingControlProps {
   pending: boolean;
   recordingCompleted: boolean;
   currentSessionId: string | null;
+  recordingTime: number;
   onStartRecording: () => void;
   onPauseRecording: () => void;
   onResumeRecording: () => void;
   onStopRecording: () => void;
+}
+
+function formatTime(seconds: number): string {
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  const secs = seconds % 60;
+
+  if (hours > 0) {
+    return `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+  }
+  return `${minutes.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
 }
 
 export function RecordingControl({
@@ -19,6 +31,7 @@ export function RecordingControl({
   pending,
   recordingCompleted,
   currentSessionId,
+  recordingTime,
   onStartRecording,
   onPauseRecording,
   onResumeRecording,
@@ -190,29 +203,65 @@ export function RecordingControl({
             <div
               style={{
                 display: "flex",
+                flexDirection: "column",
                 alignItems: "center",
                 gap: 16,
               }}
             >
-              {/* Pulsing green dot */}
+              {/* Status with breathing dot */}
               <div
                 style={{
-                  width: 24,
-                  height: 24,
-                  borderRadius: "50%",
-                  background: "#27ae60",
-                  animation: "pulse 1.5s infinite",
-                  boxShadow: "0 0 20px rgba(39, 174, 96, 0.6)",
-                }}
-              />
-              <div
-                style={{
-                  fontSize: 20,
-                  fontWeight: 700,
-                  color: "#fff",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 16,
                 }}
               >
-                {paused ? "녹음 일시정지 중" : "녹음 진행 중"}
+                {/* Breathing green dot */}
+                {!paused && (
+                  <div
+                    style={{
+                      width: 24,
+                      height: 24,
+                      borderRadius: "50%",
+                      background: "#27ae60",
+                      animation: "breathe 2s ease-in-out infinite",
+                      boxShadow: "0 0 20px rgba(39, 174, 96, 0.8)",
+                    }}
+                  />
+                )}
+                {paused && (
+                  <div
+                    style={{
+                      width: 24,
+                      height: 24,
+                      borderRadius: "50%",
+                      background: "#f39c12",
+                      boxShadow: "0 0 20px rgba(243, 156, 18, 0.8)",
+                    }}
+                  />
+                )}
+                <div
+                  style={{
+                    fontSize: 20,
+                    fontWeight: 700,
+                    color: "#fff",
+                  }}
+                >
+                  {paused ? "녹음 일시정지 중" : "녹음 진행 중"}
+                </div>
+              </div>
+
+              {/* Recording Time */}
+              <div
+                style={{
+                  fontSize: 36,
+                  fontWeight: 700,
+                  color: "#fff",
+                  fontFamily: "monospace",
+                  letterSpacing: "0.05em",
+                }}
+              >
+                {formatTime(recordingTime)}
               </div>
             </div>
 

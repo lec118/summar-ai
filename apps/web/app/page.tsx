@@ -122,6 +122,7 @@ export default function Home() {
             pending={pending}
             recordingCompleted={recording.recordingCompleted}
             currentSessionId={currentSessionId}
+            recordingTime={recording.recordingTime}
             onStartRecording={recording.startRecording}
             onPauseRecording={recording.pauseRecording}
             onResumeRecording={recording.resumeRecording}
@@ -169,6 +170,18 @@ export default function Home() {
           }
           50% {
             opacity: 0.7;
+          }
+        }
+
+        @keyframes breathe {
+          0%,
+          100% {
+            transform: scale(1);
+            opacity: 1;
+          }
+          50% {
+            transform: scale(1.3);
+            opacity: 0.6;
           }
         }
       `}</style>
