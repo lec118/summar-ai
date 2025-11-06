@@ -80,7 +80,8 @@
       "Bash(README.md)",
       "Bash(render:*)",
       "Bash(printf:*)",
-      "Bash(/tmp/report.md)"
+      "Bash(/tmp/report.md)",
+      "Bash(gh api:*)"
     ],
     "deny": [],
     "ask": []

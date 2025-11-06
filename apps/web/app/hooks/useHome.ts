@@ -134,6 +134,8 @@ export function useRecording(
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
   const [recordingTime, setRecordingTime] = useState(0);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const startTimeRef = useRef<number>(0);
+  const pausedTimeRef = useRef<number>(0);
 
   // Cleanup timer and media recorder on unmount
   useEffect(() => {
@@ -219,14 +221,14 @@ export function useRecording(
       setRecording(true);
       setRecordingTime(0);
 
-      // Start timer
-      console.log("[Recording] Starting timer...");
+      // Start timer using timestamp-based approach for accuracy
+      startTimeRef.current = Date.now();
+      pausedTimeRef.current = 0;
+
       timerRef.current = setInterval(() => {
-        setRecordingTime((prev) => {
-          console.log("[Recording] Timer tick:", prev + 1);
-          return prev + 1;
-        });
-      }, 1000);
+        const elapsed = Math.floor((Date.now() - startTimeRef.current - pausedTimeRef.current) / 1000);
+        setRecordingTime(elapsed);
+      }, 100); // Update more frequently for smoother display
     } catch (err) {
       console.error("Failed to start recording:", err);
       alert("마이크 접근에 실패했습니다. 브라우저 권한을 확인해주세요.");
@@ -238,7 +240,10 @@ export function useRecording(
       mediaRecorder.pause();
       setPaused(true);
 
-      // Pause timer
+      // Save current time when paused
+      pausedTimeRef.current = Date.now();
+
+      // Stop timer
       if (timerRef.current) {
         clearInterval(timerRef.current);
         timerRef.current = null;
@@ -251,10 +256,14 @@ export function useRecording(
       mediaRecorder.resume();
       setPaused(false);
 
-      // Resume timer
+      // Adjust start time to skip the pause duration
+      const pauseDuration = Date.now() - pausedTimeRef.current;
+      startTimeRef.current += pauseDuration;
+
       timerRef.current = setInterval(() => {
-        setRecordingTime((prev) => prev + 1);
-      }, 1000);
+        const elapsed = Math.floor((Date.now() - startTimeRef.current) / 1000);
+        setRecordingTime(elapsed);
+      }, 100);
     }
   }
 
