@@ -254,11 +254,12 @@ export function RecordingControl({
               {/* Recording Time */}
               <div
                 style={{
-                  fontSize: 36,
-                  fontWeight: 700,
+                  fontSize: 24,
+                  fontWeight: 600,
                   color: "#fff",
                   fontFamily: "monospace",
-                  letterSpacing: "0.05em",
+                  letterSpacing: "0.1em",
+                  opacity: 0.95,
                 }}
               >
                 {formatTime(recordingTime)}

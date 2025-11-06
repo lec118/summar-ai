@@ -220,8 +220,12 @@ export function useRecording(
       setRecordingTime(0);
 
       // Start timer
+      console.log("[Recording] Starting timer...");
       timerRef.current = setInterval(() => {
-        setRecordingTime((prev) => prev + 1);
+        setRecordingTime((prev) => {
+          console.log("[Recording] Timer tick:", prev + 1);
+          return prev + 1;
+        });
       }, 1000);
     } catch (err) {
       console.error("Failed to start recording:", err);
