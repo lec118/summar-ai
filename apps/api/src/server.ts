@@ -1,6 +1,8 @@
-﻿import Fastify from "fastify";
+import Fastify from "fastify";
 import cors from "@fastify/cors";
 import multipart from "@fastify/multipart";
+import rateLimit from "@fastify/rate-limit";
+import helmet from "@fastify/helmet";
 import {
   CreateLectureDTO,
   CreateSessionDTO,
@@ -31,6 +33,7 @@ import { appendParagraphs, getParagraphs } from "./db_transcript.js";
 import { Queue } from "bullmq";
 import { config, CONSTANTS } from "./config.js";
 import { createRedisConnection, testRedisConnection } from "./redis.js";
+import { initializeFileCleanup } from "./fileCleanup.js";
 
 console.log("🚀 Starting Summa AI API...");
 console.log(`📝 Environment: ${config.NODE_ENV}`);
@@ -42,6 +45,42 @@ const app = Fastify({
     level: "info"
   }
 });
+
+// Initialize file cleanup cron job
+initializeFileCleanup();
+
+// Security headers
+await app.register(helmet, {
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      scriptSrc: ["'self'"],
+      imgSrc: ["'self'", "data:", "https:"],
+    }
+  },
+  crossOriginEmbedderPolicy: false  // Required for uploads
+});
+
+// Rate limiting
+await app.register(rateLimit, {
+  max: 100,  // 100 requests
+  timeWindow: '15 minutes',
+  cache: 10000,  // Cache size
+  allowList: (req) => {
+    // Allow localhost in development
+    return config.NODE_ENV === 'development' &&
+           (req.ip === '127.0.0.1' || req.ip === '::1' || req.ip === 'localhost');
+  },
+  errorResponseBuilder: (req, context) => ({
+    ok: false,
+    error: 'Too many requests. Please try again later.',
+    retryAfter: context.after
+  }),
+  skipOnError: false
+});
+
+console.log('🔒 Security middleware registered (helmet + rate limiting)');
 
 // CORS configuration
 await app.register(cors, {
@@ -252,6 +291,11 @@ app.post("/sessions/:sid/ingest", async (req, reply) => {
       sessionId: sid,
       lectureId,
       localPath: seg.localPath
+    }, {
+      attempts: 3,
+      backoff: {
+        type: 'custom'
+      }
     });
     jobs.push(job.id);
   }
@@ -270,7 +314,7 @@ app.get("/sessions/:sid/transcript", async (req, reply) => {
   if (!params.success) return reply.code(400).send({ ok: false, error: "Invalid session ID" });
 
   const { sid } = params.data;
-  const paragraphs = getParagraphs(sid);
+  const paragraphs = await getParagraphs(sid);
   return ApiResponse({ paragraphs });
 });
 

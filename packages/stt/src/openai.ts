@@ -1,4 +1,4 @@
-﻿import { STTAdapter, STTResult } from "./types.js";
+import { STTAdapter, STTResult } from "./types.js";
 import { fileFromPath } from "formdata-node/file-from-path";
 import { FormData } from "formdata-node";
 import fetch from "node-fetch";
@@ -10,6 +10,8 @@ export class OpenAIWhisperAdapter implements STTAdapter {
     const fd = new FormData();
     fd.set("file", await fileFromPath(filePath));
     fd.set("model", model);
+    fd.set("response_format", "verbose_json");  // Get detailed timestamps
+    fd.set("timestamp_granularities[]", "segment");  // Get segment-level timestamps
     if (language) fd.set("language", language);
     if (prompt) fd.set("prompt", prompt);
 
@@ -24,11 +26,28 @@ export class OpenAIWhisperAdapter implements STTAdapter {
       throw new Error(`OpenAI STT error: ${res.status} ${t}`);
     }
 
-    const data = (await res.json()) as { text?: string; language?: string };
+    const data = (await res.json()) as {
+      text?: string;
+      language?: string;
+      segments?: Array<{
+        id: number;
+        seek: number;
+        start: number;
+        end: number;
+        text: string;
+        tokens: number[];
+        temperature: number;
+        avg_logprob: number;
+        compression_ratio: number;
+        no_speech_prob: number;
+      }>;
+    };
+
     return {
       text: data.text ?? "",
       language: data.language,
-      confidence: undefined
+      confidence: undefined,
+      segments: data.segments
     };
   }
 }

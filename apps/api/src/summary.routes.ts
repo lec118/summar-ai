@@ -19,7 +19,7 @@ export async function registerSummaryRoutes(app: FastifyInstance) {
     if (!context) return reply.code(404).send({ ok: false, error: "session not found" });
     const { lectureId } = context;
 
-    const paragraphs = getParagraphs(sid);
+    const paragraphs = await getParagraphs(sid);
     if (paragraphs.length === 0) return reply.code(400).send({ ok: false, error: "no transcript paragraphs" });
 
     // Check if slides exist (optional)
@@ -31,7 +31,7 @@ export async function registerSummaryRoutes(app: FastifyInstance) {
 
     if (hasSlides && deck) {
       // With slides: advanced summary with evidence
-      const alignments = getAlignments(sid);
+      const alignments = await getAlignments(sid);
       const coverage = Number((alignments.length / Math.max(1, paragraphs.length)).toFixed(4));
       const avgAlignScore = alignments.length === 0
         ? 0

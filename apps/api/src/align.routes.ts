@@ -20,16 +20,16 @@ export async function registerAlignRoutes(app: FastifyInstance) {
     const sid = (req.params as any).sid as string;
     const body = AlignPayload.safeParse(req.body ?? {});
     if (!body.success) return reply.code(400).send({ ok: false, error: body.error });
-    saveParagraphs(sid, body.data.paragraphs);
-    saveAlignments(sid, body.data.alignments);
+    await saveParagraphs(sid, body.data.paragraphs);
+    await saveAlignments(sid, body.data.alignments);
     return ApiResponse({ paragraphs: body.data.paragraphs.length, alignments: body.data.alignments.length });
   });
 
   app.get("/sessions/:sid/align", async (req) => {
     const sid = (req.params as any).sid as string;
     return ApiResponse({
-      paragraphs: getParagraphs(sid),
-      alignments: getAlignments(sid)
+      paragraphs: await getParagraphs(sid),
+      alignments: await getAlignments(sid)
     });
   });
 }

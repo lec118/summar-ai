@@ -1,3 +1,5 @@
+import { ErrorBoundary } from './components/ErrorBoundary';
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="ko">
@@ -26,7 +28,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         `}</style>
       </head>
       <body style={{ fontFamily: "ui-sans-serif, system-ui", background: "#0b1020", color: "#eef2ff" }}>
-        <div style={{ maxWidth: 960, margin: "0 auto", padding: 24 }}>{children}</div>
+        <ErrorBoundary>
+          <div style={{ maxWidth: 960, margin: "0 auto", padding: 24 }}>{children}</div>
+        </ErrorBoundary>
       </body>
     </html>
   );

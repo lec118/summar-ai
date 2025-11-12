@@ -33,8 +33,9 @@ model Session {
   policyOverlapSec Int     @default(5)
   policyVadPause   Boolean @default(true)
 
-  lecture   Lecture  @relation(fields: [lectureId], references: [id], onDelete: Cascade)
-  segments  Segment[]
+  lecture              Lecture               @relation(fields: [lectureId], references: [id], onDelete: Cascade)
+  segments             Segment[]
+  transcriptParagraphs TranscriptParagraph[]
 
   @@index([lectureId])
   @@map("sessions")
@@ -50,4 +51,32 @@ model Segment {
 
   @@index([sessionId])
   @@map("segments")
+}
+
+model TranscriptParagraph {
+  id        String   @id @default(uuid())
+  sessionId String
+  text      String   @db.Text
+  startMs   Int
+  endMs     Int
+  createdAt BigInt   // Unix timestamp in milliseconds
+
+  session   Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId])
+  @@map("transcript_paragraphs")
+}
+
+model Alignment {
+  id        String   @id @default(uuid())
+  sessionId String
+  paraId    String
+  slidePage Int
+  deckId    String
+  score     Float
+  createdAt BigInt   // Unix timestamp in milliseconds
+
+  @@index([sessionId])
+  @@index([paraId])
+  @@map("alignments")
 }
