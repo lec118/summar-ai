@@ -20,7 +20,24 @@ export async function registerSummaryRoutes(app: FastifyInstance) {
     const { lectureId } = context;
 
     const paragraphs = await getParagraphs(sid);
-    if (paragraphs.length === 0) return reply.code(400).send({ ok: false, error: "no transcript paragraphs" });
+    if (paragraphs.length === 0) {
+      return reply.code(400).send({
+        ok: false,
+        error: "텍스트 변환 내용이 없습니다. 먼저 텍스트 변환을 완료해주세요."
+      });
+    }
+
+    // Check minimum content requirements for meaningful summary
+    const totalText = paragraphs.map(p => p.text).join(' ');
+    const MIN_PARAGRAPHS = 3;
+    const MIN_CHARS = 200;
+
+    if (paragraphs.length < MIN_PARAGRAPHS && totalText.length < MIN_CHARS) {
+      return reply.code(400).send({
+        ok: false,
+        error: "요약을 생성하기에 내용이 충분하지 않습니다. 최소 3개 이상의 문단 또는 200자 이상의 텍스트가 필요합니다."
+      });
+    }
 
     // Check if slides exist (optional)
     const decks = listDecksByLecture(lectureId);

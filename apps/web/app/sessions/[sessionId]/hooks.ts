@@ -247,9 +247,9 @@ export function useSummaryGeneration(
       setSummary(summaryRes);
     } catch (err) {
       console.error("Failed to generate summary:", err);
-      setError(
-        err instanceof Error ? err.message : "요약 생성에 실패했습니다."
-      );
+      const errorMessage = err instanceof Error ? err.message : "요약 생성에 실패했습니다.";
+      setError(errorMessage);
+      alert(errorMessage);
     } finally {
       setSummarizing(false);
     }
