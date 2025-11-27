@@ -94,13 +94,13 @@ export async function registerSummaryRoutes(app: FastifyInstance) {
       };
     }
 
-    saveSummary(report);
+    await saveSummary(report);
     return ApiResponse(report);
   });
 
   app.get("/sessions/:sid/summary", async (req) => {
     const sid = (req.params as any).sid as string;
-    const report = getSummary(sid);
+    const report = await getSummary(sid);
     return report ? ApiResponse(report) : { ok: false, error: "no summary" };
   });
 }

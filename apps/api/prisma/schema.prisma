@@ -81,6 +81,18 @@ model Alignment {
   @@map("alignments")
 }
 
+model Summary {
+  id        String   @id @default(uuid())
+  sessionId String   @unique
+  deckId    String
+  items     Json     // SummaryItem[] stored as JSON
+  metrics   Json     // Metrics object stored as JSON
+  createdAt BigInt   // Unix timestamp in milliseconds
+
+  @@index([sessionId])
+  @@map("summaries")
+}
+
 // ============================================================================
 // CRITICAL FIX: Usage Tracking & Cost Control
 // ============================================================================
