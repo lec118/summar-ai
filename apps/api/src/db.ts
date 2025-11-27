@@ -1,8 +1,39 @@
 import type { Lecture, Session } from "@summa/shared";
 import { randomUUID } from "crypto";
 import { PrismaClient } from "@prisma/client";
+import type { Redis } from "ioredis";
 
-const prisma = new PrismaClient();
+// ============================================================================
+// CRITICAL FIX #1: Prisma Singleton Pattern
+// ============================================================================
+// Prevents connection pool exhaustion in development with hot reload
+const globalForPrisma = global as unknown as { prisma: PrismaClient };
+
+export const prisma = globalForPrisma.prisma || new PrismaClient({
+  log: process.env.NODE_ENV === 'development' ? ['error', 'warn'] : ['error'],
+});
+
+if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
+
+// ============================================================================
+// CRITICAL FIX #2: Redis-based Job Tracking
+// ============================================================================
+// Replaces in-memory Map that loses state on server restart
+
+/**
+ * Redis client for distributed job tracking (survives server restarts)
+ * Must be initialized via setRedisClient() before use
+ */
+let redisClient: Redis | null = null;
+
+/**
+ * Initialize Redis client for job tracking
+ * Call this from server.ts after Redis connection is established
+ */
+export function setRedisClient(client: Redis) {
+  redisClient = client;
+  console.log('✅ Redis client initialized for job tracking');
+}
 
 export type SessionSegment = {
   id: string;
@@ -10,8 +41,6 @@ export type SessionSegment = {
   localPath?: string;
   createdAt: number;
 };
-
-const processingJobs = new Map<string, number>(); // key: sessionId -> remaining jobs
 
 /**
  * Helper function to convert Prisma Session to shared Session type
@@ -200,12 +229,40 @@ export async function getSessionsByLectureId(lectureId: string): Promise<Session
   return sessions.map(toPrismaSession);
 }
 
-export function markProcessingJobs(sessionId: string, jobCount: number) {
-  processingJobs.set(sessionId, jobCount);
+/**
+ * CRITICAL FIX: Mark the start of processing jobs for a session
+ * Uses Redis for distributed state management (survives server restarts)
+ *
+ * @param sessionId - The session ID
+ * @param jobCount - Number of jobs to track
+ */
+export async function markProcessingJobs(sessionId: string, jobCount: number): Promise<void> {
+  if (!redisClient) {
+    console.warn('⚠️  Redis client not initialized for job tracking');
+    // Fallback: Still mark session as processing in database
+    await prisma.session.updateMany({
+      where: { id: sessionId },
+      data: { status: "processing" }
+    });
+    return;
+  }
+
+  // Store job count in Redis with 24-hour expiration (prevents orphaned keys)
+  const key = `processing:jobs:${sessionId}`;
+  await redisClient.set(key, jobCount.toString(), 'EX', 86400);
+  console.log(`📊 Marked ${jobCount} processing jobs for session ${sessionId}`);
 }
 
+/**
+ * CRITICAL FIX: Decrement job count for a session, mark as completed when done
+ * Uses atomic Redis DECR to prevent race conditions with multiple workers
+ *
+ * @param sessionId - The session ID
+ * @returns Number of remaining jobs
+ */
 export async function resolveProcessingJob(sessionId: string): Promise<number> {
-  if (!processingJobs.has(sessionId)) {
+  if (!redisClient) {
+    console.warn('⚠️  Redis client not initialized, marking session as completed');
     await prisma.session.updateMany({
       where: { id: sessionId },
       data: { status: "completed" }
@@ -213,18 +270,23 @@ export async function resolveProcessingJob(sessionId: string): Promise<number> {
     return 0;
   }
 
-  const remaining = (processingJobs.get(sessionId) ?? 0) - 1;
+  const key = `processing:jobs:${sessionId}`;
+
+  // Atomic decrement - prevents race conditions from multiple workers
+  const remaining = await redisClient.decr(key);
+
+  console.log(`📉 Job completed for session ${sessionId}, ${Math.max(0, remaining)} remaining`);
+
   if (remaining <= 0) {
-    processingJobs.delete(sessionId);
+    // All jobs completed, mark session as done and cleanup Redis key
+    await redisClient.del(key);
     await prisma.session.updateMany({
       where: { id: sessionId },
       data: { status: "completed" }
     });
+    console.log(`✅ All jobs completed for session ${sessionId}`);
     return 0;
   }
 
-  processingJobs.set(sessionId, remaining);
   return remaining;
 }
-
-export { prisma };

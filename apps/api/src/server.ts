@@ -23,7 +23,8 @@ import {
   findSessionById,
   markProcessingJobs,
   resolveProcessingJob,
-  prisma
+  prisma,
+  setRedisClient  // CRITICAL FIX: Import the new function
 } from "./db.js";
 import { registerTus } from "./upload.js";
 import { registerSlidesRoutes } from "./slides.routes.js";
@@ -34,6 +35,7 @@ import { Queue } from "bullmq";
 import { config, CONSTANTS } from "./config.js";
 import { createRedisConnection, testRedisConnection } from "./redis.js";
 import { initializeFileCleanup } from "./fileCleanup.js";
+import { estimateTranscriptionCost, checkQuota, getCurrentUsage } from "./services/costEstimator.js";
 
 console.log("🚀 Starting Summa AI API...");
 console.log(`📝 Environment: ${config.NODE_ENV}`);
@@ -116,7 +118,9 @@ await app.register(multipart, {
   }
 });
 
-// Initialize Redis connection with error handling
+// ============================================================================
+// CRITICAL FIX: Initialize Redis connection and register with db module
+// ============================================================================
 console.log("📡 Connecting to Redis...");
 const connection = createRedisConnection();
 
@@ -126,6 +130,8 @@ if (!isRedisHealthy) {
   console.error("❌ Redis connection failed. Server will start but job processing will not work.");
 } else {
   console.log("✅ Redis connection established");
+  // CRITICAL FIX: Register Redis client for job tracking
+  setRedisClient(connection);
 }
 
 const transcribeQueue = new Queue("transcribe", { connection });
@@ -281,7 +287,9 @@ app.post("/sessions/:sid/ingest", async (req, reply) => {
     data: { status: "processing" }
   });
   session.status = "processing";
-  markProcessingJobs(sid, segments.length);
+
+  // CRITICAL FIX: Now uses Redis-backed job tracking
+  await markProcessingJobs(sid, segments.length);
 
   // Queue transcription jobs for all segments
   const jobs = [];
@@ -338,6 +346,7 @@ app.post("/sessions/:sid/transcription-result", async (req, reply) => {
     appendParagraphs(sid, body.data.paragraphs);
   }
 
+  // CRITICAL FIX: Now uses Redis-backed atomic decrement
   const remainingJobs = await resolveProcessingJob(sid);
 
   return ApiResponse({

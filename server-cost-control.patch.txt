@@ -1,0 +1,45 @@
+# Add these routes BEFORE the "/** Trigger transcription" route (line 266)
+
+/** Get cost estimate for transcription */
+app.get("/sessions/:sid/estimate", async (req, reply) => {
+  const params = RouteParamsSchemas.sessionId.safeParse(req.params);
+  if (!params.success) return reply.code(400).send({ ok: false, error: "Invalid session ID" });
+
+  const { sid } = params.data;
+  const context = await findSessionById(sid);
+  if (!context) {
+    return reply.code(404).send({ ok: false, error: "session not found" });
+  }
+
+  const segments = await getSegments(sid);
+  if (segments.length === 0) {
+    return reply.code(400).send({ ok: false, error: "no segments to estimate" });
+  }
+
+  const estimate = await estimateTranscriptionCost(sid, segments);
+
+  return ApiResponse({
+    estimate: {
+      whisperMinutes: estimate.whisperMinutes,
+      totalCostCents: estimate.totalCostEstimate,
+      totalCostDollars: estimate.totalCostEstimate / 100,
+      breakdown: {
+        whisper: estimate.whisperCost / 100,
+        gpt4: estimate.gpt4CostEstimate / 100,
+        embeddings: estimate.embeddingCostEstimate / 100
+      },
+      canAfford: estimate.canAfford,
+      remaining: {
+        minutes: estimate.remaining.minutes,
+        budgetDollars: estimate.remaining.budget / 100
+      }
+    }
+  });
+});
+
+/** Get current usage statistics */
+app.get("/usage", async () => {
+  const usage = await getCurrentUsage();
+  return ApiResponse(usage);
+});
+

@@ -80,3 +80,52 @@ model Alignment {
   @@index([paraId])
   @@map("alignments")
 }
+
+// ============================================================================
+// CRITICAL FIX: Usage Tracking & Cost Control
+// ============================================================================
+
+model UsageMetrics {
+  id        String  @id @default(uuid())
+  lectureId String?
+  sessionId String?
+
+  // API usage tracking
+  whisperMinutes  Float @default(0)
+  gpt4Tokens      Int   @default(0)
+  embeddingTokens Int   @default(0)
+
+  // Cost tracking (in USD cents to avoid floating point issues)
+  whisperCost     Int @default(0)
+  gpt4Cost        Int @default(0)
+  embeddingCost   Int @default(0)
+  totalCost       Int @default(0)
+
+  createdAt BigInt
+  updatedAt BigInt
+
+  @@index([lectureId])
+  @@index([sessionId])
+  @@index([createdAt])
+  @@map("usage_metrics")
+}
+
+model QuotaLimit {
+  id     String  @id @default(uuid())
+  userId String? @unique // Will be used when authentication is added
+
+  // Monthly limits (default: free tier)
+  maxMinutes Int @default(180) // 3 hours per month
+  maxCost    Int @default(500) // $5.00 per month (in cents)
+
+  // Current usage (resets monthly)
+  usedMinutes Float @default(0)
+  usedCost    Int   @default(0)
+
+  // Metadata
+  resetDate BigInt // Next reset timestamp
+  createdAt BigInt
+  updatedAt BigInt
+
+  @@map("quota_limits")
+}
