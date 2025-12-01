@@ -135,27 +135,43 @@ export function useRecording(
   const [recordingTime, setRecordingTime] = useState(0);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const startTimeRef = useRef<number>(0);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
 
-  // Cleanup timer and media recorder on unmount
+  // Helper function to start timer
+  const startTimer = () => {
+    startTimeRef.current = Date.now();
+    setRecordingTime(0);
+
+    timerRef.current = setInterval(() => {
+      const elapsed = Math.floor((Date.now() - startTimeRef.current) / 1000);
+      setRecordingTime(elapsed);
+    }, 100);
+  };
+
+  // Helper function to stop timer
+  const stopTimer = () => {
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+  };
+
+  // Cleanup on unmount only
   useEffect(() => {
     return () => {
-      // Clear timer
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-        timerRef.current = null;
-      }
+      stopTimer();
 
       // Stop media recorder and release resources
-      if (mediaRecorder && mediaRecorder.state !== "inactive") {
+      if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
         try {
-          mediaRecorder.stop();
-          mediaRecorder.stream.getTracks().forEach((track) => track.stop());
+          mediaRecorderRef.current.stop();
+          mediaRecorderRef.current.stream.getTracks().forEach((track) => track.stop());
         } catch (err) {
           console.error("Error cleaning up media recorder:", err);
         }
       }
     };
-  }, [mediaRecorder]);
+  }, []);
 
   async function startRecording(): Promise<void> {
     if (!activeLecture) {
@@ -182,13 +198,10 @@ export function useRecording(
         // Cleanup on error
         stream.getTracks().forEach((track) => track.stop());
         setMediaRecorder(null);
+        mediaRecorderRef.current = null;
         setRecording(false);
         setPaused(false);
-
-        if (timerRef.current) {
-          clearInterval(timerRef.current);
-          timerRef.current = null;
-        }
+        stopTimer();
         setRecordingTime(0);
       };
 
@@ -217,16 +230,11 @@ export function useRecording(
 
       recorder.start();
       setMediaRecorder(recorder);
+      mediaRecorderRef.current = recorder;
       setRecording(true);
 
-      // Start timer using timestamp-based approach for accuracy
-      startTimeRef.current = Date.now();
-      setRecordingTime(0);
-
-      timerRef.current = setInterval(() => {
-        const elapsed = Math.floor((Date.now() - startTimeRef.current) / 1000);
-        setRecordingTime(elapsed);
-      }, 100); // Update more frequently for smoother display
+      // Start timer
+      startTimer();
     } catch (err) {
       console.error("Failed to start recording:", err);
       alert("마이크 접근에 실패했습니다. 브라우저 권한을 확인해주세요.");
@@ -237,12 +245,7 @@ export function useRecording(
     if (mediaRecorder && mediaRecorder.state === "recording") {
       mediaRecorder.pause();
       setPaused(true);
-
-      // Stop timer and save current time
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-        timerRef.current = null;
-      }
+      stopTimer();
     }
   }
 
@@ -251,9 +254,9 @@ export function useRecording(
       mediaRecorder.resume();
       setPaused(false);
 
-      // Adjust start time to account for the pause (move start time forward)
+      // Adjust start time to account for the pause
       const now = Date.now();
-      const currentElapsed = recordingTime * 1000; // Convert back to ms
+      const currentElapsed = recordingTime * 1000;
       startTimeRef.current = now - currentElapsed;
 
       timerRef.current = setInterval(() => {
@@ -267,14 +270,10 @@ export function useRecording(
     if (mediaRecorder && mediaRecorder.state !== "inactive") {
       mediaRecorder.stop();
       setMediaRecorder(null);
+      mediaRecorderRef.current = null;
       setRecording(false);
       setPaused(false);
-
-      // Clear timer
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-        timerRef.current = null;
-      }
+      stopTimer();
       setRecordingTime(0);
     }
   }
