@@ -137,15 +137,22 @@ export function useRecording(
   const startTimeRef = useRef<number>(0);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
 
+  // Constants
+  const TIMER_UPDATE_INTERVAL_MS = 100;
+
   // Helper function to start timer
-  const startTimer = () => {
-    startTimeRef.current = Date.now();
-    setRecordingTime(0);
+  const startTimer = (initialElapsedSeconds = 0) => {
+    const now = Date.now();
+    startTimeRef.current = now - (initialElapsedSeconds * 1000);
+
+    if (initialElapsedSeconds === 0) {
+      setRecordingTime(0);
+    }
 
     timerRef.current = setInterval(() => {
       const elapsed = Math.floor((Date.now() - startTimeRef.current) / 1000);
       setRecordingTime(elapsed);
-    }, 100);
+    }, TIMER_UPDATE_INTERVAL_MS);
   };
 
   // Helper function to stop timer
@@ -256,15 +263,8 @@ export function useRecording(
       mediaRecorder.resume();
       setPaused(false);
 
-      // Adjust start time to account for the pause
-      const now = Date.now();
-      const currentElapsed = recordingTime * 1000;
-      startTimeRef.current = now - currentElapsed;
-
-      timerRef.current = setInterval(() => {
-        const elapsed = Math.floor((Date.now() - startTimeRef.current) / 1000);
-        setRecordingTime(elapsed);
-      }, 100);
+      // Resume timer from current elapsed time
+      startTimer(recordingTime);
     }
   }
 

@@ -16,7 +16,7 @@ export const btnPrimary: React.CSSProperties = {
 
 export const btnSecondary: React.CSSProperties = {
   padding: "12px 20px",
-  background: "#27272A", // Dark gray for secondary
+  background: "var(--bg-secondary)",
   color: "#fff",
   borderRadius: 12,
   border: "1px solid var(--border-color)",
@@ -49,7 +49,7 @@ export const btnLarge: React.CSSProperties = {
 
 export const btnIcon: React.CSSProperties = {
   padding: "16px",
-  background: "#27272A",
+  background: "var(--bg-secondary)",
   border: "1px solid var(--border-color)",
   cursor: "pointer",
   width: 64,
@@ -70,7 +70,7 @@ export const btnDanger: React.CSSProperties = {
   display: "flex",
   alignItems: "center",
   gap: 8,
-  background: "#EF4444",
+  background: "var(--danger-color)",
   color: "#fff",
   border: "none",
   cursor: "pointer",
@@ -140,7 +140,7 @@ export const iconCircleStyle: React.CSSProperties = {
 
 export const codeStyle: React.CSSProperties = {
   padding: "2px 6px",
-  background: "#27272A",
+  background: "var(--bg-secondary)",
   borderRadius: 4,
   fontSize: 14,
   fontFamily: "monospace",
@@ -169,7 +169,7 @@ export const td: React.CSSProperties = {
 export const inputStyle: React.CSSProperties = {
   padding: "16px 20px",
   borderRadius: 12,
-  background: "#27272A",
+  background: "var(--bg-secondary)",
   color: "var(--text-primary)",
   border: "1px solid var(--border-color)",
   fontSize: 16,
@@ -181,7 +181,7 @@ export const inputStyle: React.CSSProperties = {
 export const selectStyle: React.CSSProperties = {
   padding: "16px 20px",
   borderRadius: 12,
-  background: "#27272A",
+  background: "var(--bg-secondary)",
   color: "var(--text-primary)",
   border: "1px solid var(--border-color)",
   fontSize: 16,
