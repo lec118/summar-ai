@@ -130,7 +130,7 @@ export default function Home() {
       {/* Empty State when no lecture selected */}
       {!activeLecture && (
         <div style={emptyStateStyle}>
-          <div style={{ fontSize: 64, marginBottom: 24 }}>🍌</div>
+          <div style={{ fontSize: 64, marginBottom: 24 }}>📚</div>
           <h3 style={{ fontSize: 24, marginBottom: 12, fontWeight: 700, color: "var(--text-primary)" }}>
             강의를 선택하거나 생성하세요
           </h3>

@@ -34,7 +34,7 @@ export function LectureSelector({
       </h2>
       
       {!showNewLectureForm ? (
-        <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+        <div style={{ display: "flex", gap: 12, flexWrap: "wrap", alignItems: "center" }}>
           <select
             onChange={(e) => {
               const lecture = lectures.find((l) => l.id === e.target.value);

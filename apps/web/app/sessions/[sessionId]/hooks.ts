@@ -249,7 +249,7 @@ export function useSummaryGeneration(
       console.error("Failed to generate summary:", err);
       const errorMessage = err instanceof Error ? err.message : "요약 생성에 실패했습니다. 잠시 후 다시 시도해주세요.";
       setError(errorMessage);
-      // alert(errorMessage); // Removed alert to rely on UI error display
+      alert(errorMessage);
     } finally {
       setSummarizing(false);
     }

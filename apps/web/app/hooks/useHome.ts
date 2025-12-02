@@ -216,10 +216,12 @@ export function useRecording(
           await apiUpload(`/sessions/${sessionId}/upload`, formData);
 
           // Mark as completed and store session ID
+          setRecording(false);
           setRecordingCompleted(true);
           setCurrentSessionId(sessionId);
         } catch (err) {
           console.error("Upload failed:", err);
+          setRecording(false);
           alert(
             err instanceof ApiError
               ? err.message
@@ -271,10 +273,11 @@ export function useRecording(
       mediaRecorder.stop();
       setMediaRecorder(null);
       mediaRecorderRef.current = null;
-      setRecording(false);
       setPaused(false);
       stopTimer();
       setRecordingTime(0);
+      // Don't set recording to false here - let onstop handler do it
+      // This prevents the "start recording" button from briefly showing
     }
   }
 
