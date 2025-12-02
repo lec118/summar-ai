@@ -56,12 +56,14 @@ export async function apiRequest<T>(
 
       try {
         const errorData = await response.json();
+        console.log('[API Error] Status:', response.status, 'Response:', errorData);
         if (errorData.error) {
           errorMessage = errorData.error;
           details = errorData.details;
         }
-      } catch {
+      } catch (e) {
         // Response body is not JSON, use status text
+        console.log('[API Error] Failed to parse error response:', e);
       }
 
       throw new ApiError(errorMessage, response.status, details);
@@ -122,12 +124,14 @@ export async function apiUpload<T>(
 
       try {
         const errorData = await response.json();
+        console.log('[API Upload Error] Status:', response.status, 'Response:', errorData);
         if (errorData.error) {
           errorMessage = errorData.error;
           details = errorData.details;
         }
-      } catch {
+      } catch (e) {
         // Response body is not JSON
+        console.log('[API Upload Error] Failed to parse error response:', e);
       }
 
       throw new ApiError(errorMessage, response.status, details);
