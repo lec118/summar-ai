@@ -1,5 +1,5 @@
 "use client";
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   useSessionData,
@@ -18,6 +18,7 @@ import {
   SummaryItemList,
 } from "./components";
 import { mainStyle, btnPrimary, btnSecondary, btnLarge, codeStyle } from "./styles";
+import { ErrorModal } from "../../components/ErrorModal";
 
 export default function SessionDetailPage({
   params,
@@ -29,12 +30,32 @@ export default function SessionDetailPage({
   const { sessionId } = params;
   const autoStart = searchParams.get("autoStart") === "true";
 
+  // Error modal state
+  const [errorModal, setErrorModal] = useState<{ isOpen: boolean; message: string; title?: string }>({
+    isOpen: false,
+    message: "",
+    title: "오류",
+  });
+
   // Custom hooks for data and actions
   const { session, setSession, segments, transcript, setTranscript, summary, setSummary, loading, error, setError } = useSessionData(sessionId);
   useSessionPolling(sessionId, session, setSession, setTranscript);
   const { transcribing, transcriptionStep, successMessage, startTranscription } = useTranscription(sessionId, session, setSession, setError);
-  const { uploadingSlides, uploadSlides } = useSlidesUpload(sessionId, setError);
-  const { summarizing, generateSummary } = useSummaryGeneration(sessionId, setSummary, setError);
+  const { uploadingSlides, uploadSlides } = useSlidesUpload(
+    sessionId,
+    setError,
+    (message) => {
+      setErrorModal({ isOpen: true, message, title: "성공" });
+    }
+  );
+  const { summarizing, generateSummary } = useSummaryGeneration(
+    sessionId,
+    setSummary,
+    setError,
+    (message) => {
+      setErrorModal({ isOpen: true, message, title: "오류" });
+    }
+  );
 
   // File input ref for slides upload
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -82,7 +103,7 @@ export default function SessionDetailPage({
           }}
         >
           <div style={{ fontSize: 48, marginBottom: 16 }}>❌</div>
-          <h2 style={{ fontSize: 20, marginBottom: 16, color: "#EF4444", fontWeight: 700 }}>
+          <h2 style={{ fontSize: 20, marginBottom: 16, color: "var(--danger-color)", fontWeight: 700 }}>
             오류 발생
           </h2>
           <p style={{ color: "var(--text-secondary)", marginBottom: 24 }}>{error}</p>
@@ -95,9 +116,9 @@ export default function SessionDetailPage({
   }
 
   return (
-    <main style={mainStyle}>
+    <main style={{ ...mainStyle, alignItems: "flex-start", maxWidth: 1200 }}>
       {/* Header */}
-      <div style={{ marginBottom: 32 }}>
+      <div style={{ marginBottom: 32, width: "100%" }}>
         <button
           onClick={() => router.push("/")}
           style={{
@@ -130,7 +151,7 @@ export default function SessionDetailPage({
             border: "1px solid rgba(239, 68, 68, 0.2)",
             borderRadius: 12,
             marginBottom: 24,
-            color: "#EF4444",
+            color: "var(--danger-color)",
           }}
         >
           ❌ {error}
@@ -175,6 +196,7 @@ export default function SessionDetailPage({
           gridTemplateColumns: "repeat(4, 1fr)",
           gap: 16,
           marginBottom: 40,
+          width: "100%",
         }}
       >
         <StepCard
@@ -319,7 +341,7 @@ export default function SessionDetailPage({
               }}>
                 <div style={{ fontSize: 24, animation: "pulse 1.5s infinite" }}>⚙️</div>
                 <div>
-                  <div style={{ fontWeight: 700, color: "#EF4444", marginBottom: 4 }}>진행 중</div>
+                  <div style={{ fontWeight: 700, color: "var(--danger-color)", marginBottom: 4 }}>진행 중</div>
                   <div style={{ fontSize: 15, color: "var(--text-secondary)" }}>{transcriptionStep}</div>
                 </div>
               </div>
@@ -349,7 +371,7 @@ export default function SessionDetailPage({
                 style={{
                   width: "100%",
                   height: 12,
-                  background: "#27272A",
+                  background: "var(--bg-secondary)",
                   borderRadius: 6,
                   overflow: "hidden",
                   position: "relative",
@@ -408,7 +430,7 @@ export default function SessionDetailPage({
               <span
                 style={{
                   padding: "4px 12px",
-                  background: "#27ae60",
+                  background: "var(--success-color)",
                   borderRadius: 8,
                   fontSize: 14,
                 }}
@@ -545,7 +567,13 @@ export default function SessionDetailPage({
         )}
       </Section>
 
-
+      {/* Error Modal */}
+      <ErrorModal
+        isOpen={errorModal.isOpen}
+        title={errorModal.title}
+        message={errorModal.message}
+        onClose={() => setErrorModal({ isOpen: false, message: "", title: "오류" })}
+      />
     </main>
   );
 }

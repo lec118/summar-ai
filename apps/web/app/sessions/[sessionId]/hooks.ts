@@ -198,7 +198,7 @@ export function useTranscription(sessionId: string, session: Session | null, set
   return { transcribing, transcriptionStep, successMessage, startTranscription };
 }
 
-export function useSlidesUpload(sessionId: string, setError: (error: string | null) => void) {
+export function useSlidesUpload(sessionId: string, setError: (error: string | null) => void, onSuccess?: (message: string) => void) {
   const [uploadingSlides, setUploadingSlides] = useState(false);
 
   async function uploadSlides(file: File) {
@@ -211,7 +211,9 @@ export function useSlidesUpload(sessionId: string, setError: (error: string | nu
 
       await apiUpload(`/slides/upload?sessionId=${sessionId}`, formData);
 
-      alert("슬라이드가 성공적으로 업로드되었습니다!");
+      if (onSuccess) {
+        onSuccess("슬라이드가 성공적으로 업로드되었습니다!");
+      }
     } catch (err) {
       console.error("Failed to upload slides:", err);
       setError(
@@ -228,7 +230,8 @@ export function useSlidesUpload(sessionId: string, setError: (error: string | nu
 export function useSummaryGeneration(
   sessionId: string,
   setSummary: (summary: SummaryReport) => void,
-  setError: (error: string | null) => void
+  setError: (error: string | null) => void,
+  onError?: (message: string) => void
 ) {
   const [summarizing, setSummarizing] = useState(false);
 
@@ -249,7 +252,10 @@ export function useSummaryGeneration(
       console.error("Failed to generate summary:", err);
       const errorMessage = err instanceof Error ? err.message : "요약 생성에 실패했습니다. 잠시 후 다시 시도해주세요.";
       setError(errorMessage);
-      alert(errorMessage);
+
+      if (onError) {
+        onError(errorMessage);
+      }
     } finally {
       setSummarizing(false);
     }

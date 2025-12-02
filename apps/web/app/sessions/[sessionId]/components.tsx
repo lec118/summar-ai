@@ -23,7 +23,7 @@ export function ProcessStep({
     >
       <span style={{ fontSize: 20 }}>{icon}</span>
       <span style={{ opacity: 0.8 }}>{text}</span>
-      {completed && <span style={{ marginLeft: "auto", color: "#27ae60" }}>✓</span>}
+      {completed && <span style={{ marginLeft: "auto", color: "var(--success-color)" }}>✓</span>}
     </div>
   );
 }
@@ -51,6 +51,10 @@ export function StepCard({
           completed ? "#22C55E" : active ? "#FACC15" : "var(--border-color)"
         }`,
         textAlign: "center",
+        minHeight: 100,
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "center",
       }}
     >
       <div
@@ -96,6 +100,7 @@ export function Section({
         border: `1px solid ${
           completed ? "#22C55E" : active ? "#FACC15" : "var(--border-color)"
         }`,
+        width: "100%",
       }}
     >
       <h2
@@ -148,11 +153,11 @@ export function StatusBadge({ status }: { status: SessionStatus }) {
     { label: string; color: string; bg: string }
   > = {
     idle: { label: "대기 중", color: "var(--text-secondary)", bg: "var(--card-bg)" },
-    recording: { label: "녹음 중", color: "#EF4444", bg: "rgba(239, 68, 68, 0.1)" },
+    recording: { label: "녹음 중", color: "var(--danger-color)", bg: "rgba(239, 68, 68, 0.1)" },
     uploaded: { label: "업로드 완료", color: "var(--primary-color)", bg: "rgba(59, 130, 246, 0.1)" },
-    processing: { label: "처리 중", color: "#FACC15", bg: "rgba(250, 204, 21, 0.1)" },
-    completed: { label: "완료", color: "#22C55E", bg: "rgba(34, 197, 94, 0.1)" },
-    error: { label: "오류", color: "#EF4444", bg: "rgba(239, 68, 68, 0.1)" },
+    processing: { label: "처리 중", color: "var(--accent-color)", bg: "rgba(250, 204, 21, 0.1)" },
+    completed: { label: "완료", color: "var(--success-color)", bg: "rgba(34, 197, 94, 0.1)" },
+    error: { label: "오류", color: "var(--danger-color)", bg: "rgba(239, 68, 68, 0.1)" },
   };
 
   const config = statusConfig[status];
@@ -188,13 +193,13 @@ export function MetricCard({
   const color =
     value >= 0.7
       ? inverted
-        ? "#EF4444"
-        : "#22C55E"
+        ? "var(--danger-color)"
+        : "var(--success-color)"
       : value >= 0.4
-      ? "#FACC15"
+      ? "var(--accent-color)"
       : inverted
-      ? "#22C55E"
-      : "#EF4444";
+      ? "var(--success-color)"
+      : "var(--danger-color)";
 
   return (
     <div
