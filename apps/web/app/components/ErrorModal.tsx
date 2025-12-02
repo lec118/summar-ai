@@ -68,6 +68,7 @@ export function ErrorModal({ isOpen, title = "오류", message, onClose }: Error
             marginBottom: 24,
             wordBreak: "break-word",
             overflowWrap: "anywhere",
+            whiteSpace: "pre-wrap",
           }}
         >
           {message}

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { apiRequest, apiUpload } from "../../../lib/api";
+import { apiRequest, apiUpload, ApiError } from "../../../lib/api";
 import { Session, Segment, TranscriptParagraph, SummaryReport } from "./types";
 
 export function useSessionData(sessionId: string) {
@@ -188,7 +188,16 @@ export function useTranscription(sessionId: string, session: Session | null, set
     } catch (err) {
       console.error("[Transcription] Error:", err);
 
-      const errorMessage = err instanceof Error ? err.message : "텍스트 변환을 시작할 수 없습니다.";
+      let errorMessage = "텍스트 변환을 시작할 수 없습니다.";
+      if (err instanceof ApiError) {
+        errorMessage = err.message;
+        if (err.details) {
+          errorMessage += `\n\n상세 정보: ${JSON.stringify(err.details, null, 2)}`;
+        }
+      } else if (err instanceof Error) {
+        errorMessage = err.message;
+      }
+
       setError(errorMessage);
       setTranscriptionStep("");
       setTranscribing(false);
@@ -216,9 +225,18 @@ export function useSlidesUpload(sessionId: string, setError: (error: string | nu
       }
     } catch (err) {
       console.error("Failed to upload slides:", err);
-      setError(
-        err instanceof Error ? err.message : "슬라이드 업로드에 실패했습니다."
-      );
+
+      let errorMessage = "슬라이드 업로드에 실패했습니다.";
+      if (err instanceof ApiError) {
+        errorMessage = err.message;
+        if (err.details) {
+          errorMessage += `\n\n상세 정보: ${JSON.stringify(err.details, null, 2)}`;
+        }
+      } else if (err instanceof Error) {
+        errorMessage = err.message;
+      }
+
+      setError(errorMessage);
     } finally {
       setUploadingSlides(false);
     }
@@ -250,7 +268,17 @@ export function useSummaryGeneration(
       setSummary(summaryRes);
     } catch (err) {
       console.error("Failed to generate summary:", err);
-      const errorMessage = err instanceof Error ? err.message : "요약 생성에 실패했습니다. 잠시 후 다시 시도해주세요.";
+
+      let errorMessage = "요약 생성에 실패했습니다. 잠시 후 다시 시도해주세요.";
+      if (err instanceof ApiError) {
+        errorMessage = err.message;
+        if (err.details) {
+          errorMessage += `\n\n상세 정보: ${JSON.stringify(err.details, null, 2)}`;
+        }
+      } else if (err instanceof Error) {
+        errorMessage = err.message;
+      }
+
       setError(errorMessage);
 
       if (onError) {
