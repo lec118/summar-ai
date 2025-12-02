@@ -47,6 +47,37 @@ export const btnLarge: React.CSSProperties = {
   margin: "0 auto",
 };
 
+export const btnIcon: React.CSSProperties = {
+  padding: "16px",
+  background: "#27272A",
+  border: "1px solid var(--border-color)",
+  cursor: "pointer",
+  width: 64,
+  height: 64,
+  borderRadius: 20,
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  fontSize: 24,
+  transition: "all 0.2s ease",
+};
+
+export const btnDanger: React.CSSProperties = {
+  padding: "0 32px",
+  height: 64,
+  borderRadius: 20,
+  fontSize: 18,
+  display: "flex",
+  alignItems: "center",
+  gap: 8,
+  background: "#EF4444",
+  color: "#fff",
+  border: "none",
+  cursor: "pointer",
+  fontWeight: 600,
+  transition: "all 0.2s ease",
+};
+
 export const btnSm: React.CSSProperties = {
   padding: "8px 16px",
   borderRadius: 8,
@@ -79,6 +110,32 @@ export const sectionStyle: React.CSSProperties = {
   boxShadow: "var(--shadow-sm)",
   width: "100%",
   border: "1px solid var(--border-color)",
+};
+
+export const emptyStateStyle: React.CSSProperties = {
+  marginTop: 40,
+  padding: 80,
+  background: "var(--card-bg)",
+  borderRadius: 24,
+  textAlign: "center",
+  boxShadow: "var(--shadow-sm)",
+  width: "100%",
+  maxWidth: 800,
+  border: "1px solid var(--border-color)",
+};
+
+export const iconCircleStyle: React.CSSProperties = {
+  width: 80,
+  height: 80,
+  background: "rgba(59, 130, 246, 0.1)",
+  borderRadius: "50%",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  margin: "0 auto 24px",
+  color: "var(--primary-color)",
+  fontSize: 32,
+  border: "1px solid rgba(59, 130, 246, 0.2)",
 };
 
 export const codeStyle: React.CSSProperties = {

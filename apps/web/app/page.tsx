@@ -6,7 +6,7 @@ import { useLectures, useSessions, useRecording, useFileUpload } from "./hooks/u
 import { LectureSelector } from "./components/home/LectureSelector";
 import { RecordingControl } from "./components/home/RecordingControl";
 import { SessionHistoryModal } from "./components/home/SessionHistoryModal";
-import { mainStyle, btnSecondary } from "./styles/constants";
+import { mainStyle, btnSecondary, emptyStateStyle } from "./styles/constants";
 
 export default function Home() {
   const router = useRouter();
@@ -129,19 +129,7 @@ export default function Home() {
 
       {/* Empty State when no lecture selected */}
       {!activeLecture && (
-        <div
-          style={{
-            marginTop: 40,
-            padding: 80,
-            background: "var(--card-bg)",
-            borderRadius: 24,
-            textAlign: "center",
-            boxShadow: "var(--shadow-sm)",
-            width: "100%",
-            maxWidth: 800,
-            border: "1px solid var(--border-color)",
-          }}
-        >
+        <div style={emptyStateStyle}>
           <div style={{ fontSize: 64, marginBottom: 24 }}>🍌</div>
           <h3 style={{ fontSize: 24, marginBottom: 12, fontWeight: 700, color: "var(--text-primary)" }}>
             강의를 선택하거나 생성하세요

@@ -1,6 +1,6 @@
 import React from "react";
 import { useRouter } from "next/navigation";
-import { sectionStyle, btnLarge, btnPrimary, btnSecondary } from "../../styles/constants";
+import { sectionStyle, btnLarge, btnIcon, btnDanger, iconCircleStyle } from "../../styles/constants";
 
 interface RecordingControlProps {
   recording: boolean;
@@ -23,8 +23,6 @@ function formatTime(seconds: number): string {
   // Always show HH:MM:SS format (시:분:초)
   return `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
 }
-
-
 
 export function RecordingControl({
   recording,
@@ -74,21 +72,7 @@ export function RecordingControl({
     }}>
       {!recording ? (
         <div style={{ textAlign: "center", width: '100%' }}>
-          <div style={{ 
-            width: 80, 
-            height: 80, 
-            background: 'rgba(59, 130, 246, 0.1)', 
-            borderRadius: '50%', 
-            display: 'flex', 
-            alignItems: 'center', 
-            justifyContent: 'center',
-            margin: '0 auto 24px',
-            color: 'var(--primary-color)',
-            fontSize: 32,
-            border: '1px solid rgba(59, 130, 246, 0.2)'
-          }}>
-            🎤
-          </div>
+          <div style={iconCircleStyle}>🎤</div>
           <h3 style={{ fontSize: 22, fontWeight: 700, marginBottom: 12, color: "var(--text-primary)" }}>
             강의 녹음 시작
           </h3>
@@ -150,20 +134,7 @@ export function RecordingControl({
             {!paused ? (
               <button
                 onClick={onPauseRecording}
-                style={{
-                  padding: "16px",
-                  background: "#27272A",
-                  border: "1px solid var(--border-color)",
-                  cursor: "pointer",
-                  width: 64,
-                  height: 64,
-                  borderRadius: 20,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: 24,
-                  color: "var(--text-primary)"
-                }}
+                style={{ ...btnIcon, color: "var(--text-primary)" }}
                 title="일시정지"
               >
                 ⏸
@@ -171,43 +142,14 @@ export function RecordingControl({
             ) : (
               <button
                 onClick={onResumeRecording}
-                style={{
-                  padding: "16px",
-                  background: "#27272A",
-                  border: "1px solid var(--border-color)",
-                  cursor: "pointer",
-                  width: 64,
-                  height: 64,
-                  borderRadius: 20,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: 24,
-                  color: "var(--primary-color)"
-                }}
+                style={{ ...btnIcon, color: "var(--primary-color)" }}
                 title="계속 녹음"
               >
                 ▶
               </button>
             )}
-            
-            <button
-              onClick={onStopRecording}
-              style={{
-                padding: "0 32px",
-                height: 64,
-                borderRadius: 20,
-                fontSize: 18,
-                display: 'flex',
-                alignItems: 'center',
-                gap: 8,
-                background: "#EF4444",
-                color: "#fff",
-                border: "none",
-                cursor: "pointer",
-                fontWeight: 600
-              }}
-            >
+
+            <button onClick={onStopRecording} style={btnDanger}>
               <span style={{ fontSize: 16 }}>⏹</span> 녹음 종료
             </button>
           </div>
