@@ -6,7 +6,7 @@ import { useLectures, useSessions, useRecording, useFileUpload } from "./hooks/u
 import { LectureSelector } from "./components/home/LectureSelector";
 import { RecordingControl } from "./components/home/RecordingControl";
 import { SessionHistoryModal } from "./components/home/SessionHistoryModal";
-import { mainStyle } from "./styles/constants";
+import { mainStyle, btnSecondary } from "./styles/constants";
 
 export default function Home() {
   const router = useRouter();
@@ -52,12 +52,29 @@ export default function Home() {
 
   return (
     <main style={mainStyle}>
-      <h1 style={{ fontSize: 32, marginBottom: 8, fontWeight: 700 }}>
-        🎤 Summa AI — 강의 녹음 자동 요약
-      </h1>
-      <p style={{ opacity: 0.7, marginBottom: 32, fontSize: 16 }}>
-        강의를 녹음하고 자동으로 텍스트 변환 및 요약을 생성합니다
-      </p>
+      <div style={{ textAlign: 'center', marginBottom: 60 }}>
+        <h1 style={{ 
+          fontSize: 56, 
+          marginBottom: 24, 
+          fontWeight: 800,
+          color: "var(--text-primary)",
+          letterSpacing: "-0.02em",
+          lineHeight: 1.2
+        }}>
+          Summa AI
+          <span style={{ color: "var(--primary-color)", marginLeft: 8 }}>.</span>
+        </h1>
+        <p style={{ 
+          color: "var(--text-secondary)", 
+          fontSize: 20,
+          maxWidth: 600,
+          margin: "0 auto",
+          lineHeight: 1.6,
+          fontWeight: 500
+        }}>
+          강의를 녹음하고 자동으로 텍스트 변환 및 요약을 생성합니다
+        </p>
+      </div>
 
       {/* Lecture Selection */}
       <LectureSelector
@@ -78,7 +95,7 @@ export default function Home() {
 
       {/* Recording Actions - Only show when lecture is selected */}
       {activeLecture && (
-        <>
+        <div style={{ width: '100%', maxWidth: 800, marginTop: 32 }}>
           {/* History Button - Above the recording frame */}
           <div
             style={{
@@ -89,28 +106,7 @@ export default function Home() {
           >
             <button
               onClick={() => setShowHistoryPopup(true)}
-              style={{
-                padding: "10px 18px",
-                background: "#0f1530",
-                color: "#fff",
-                borderRadius: 10,
-                border: "1px solid #334",
-                cursor: "pointer",
-                fontSize: 14,
-                fontWeight: 600,
-                transition: "all 0.2s",
-                display: "flex",
-                alignItems: "center",
-                gap: 8,
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = "#192041";
-                e.currentTarget.style.borderColor = "#5865f2";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = "#0f1530";
-                e.currentTarget.style.borderColor = "#334";
-              }}
+              style={btnSecondary}
             >
               📋 녹음 기록
             </button>
@@ -128,26 +124,29 @@ export default function Home() {
             onResumeRecording={recording.resumeRecording}
             onStopRecording={recording.stopRecording}
           />
-        </>
+        </div>
       )}
 
       {/* Empty State when no lecture selected */}
       {!activeLecture && (
         <div
           style={{
-            marginBottom: 40,
-            padding: 48,
-            background: "#0f1530",
-            borderRadius: 16,
+            marginTop: 40,
+            padding: 80,
+            background: "var(--card-bg)",
+            borderRadius: 24,
             textAlign: "center",
-            border: "2px dashed #334",
+            boxShadow: "var(--shadow-sm)",
+            width: "100%",
+            maxWidth: 800,
+            border: "1px solid var(--border-color)",
           }}
         >
-          <div style={{ fontSize: 48, marginBottom: 16 }}>📚</div>
-          <h3 style={{ fontSize: 20, marginBottom: 8, opacity: 0.9 }}>
+          <div style={{ fontSize: 64, marginBottom: 24 }}>🍌</div>
+          <h3 style={{ fontSize: 24, marginBottom: 12, fontWeight: 700, color: "var(--text-primary)" }}>
             강의를 선택하거나 생성하세요
           </h3>
-          <p style={{ opacity: 0.6, fontSize: 14 }}>
+          <p style={{ color: "var(--text-secondary)", fontSize: 17 }}>
             위에서 "새 강의 만들기" 버튼을 눌러 시작하세요
           </p>
         </div>
@@ -161,30 +160,6 @@ export default function Home() {
         onSessionClick={(sessionId) => router.push(`/sessions/${sessionId}`)}
         onDeleteSession={deleteSession}
       />
-
-      <style jsx>{`
-        @keyframes pulse {
-          0%,
-          100% {
-            opacity: 1;
-          }
-          50% {
-            opacity: 0.7;
-          }
-        }
-
-        @keyframes breathe {
-          0%,
-          100% {
-            transform: scale(1);
-            opacity: 1;
-          }
-          50% {
-            transform: scale(1.3);
-            opacity: 0.6;
-          }
-        }
-      `}</style>
     </main>
   );
 }

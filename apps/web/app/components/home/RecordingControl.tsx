@@ -1,5 +1,6 @@
 import React from "react";
 import { useRouter } from "next/navigation";
+import { sectionStyle, btnLarge, btnPrimary, btnSecondary } from "../../styles/constants";
 
 interface RecordingControlProps {
   recording: boolean;
@@ -23,6 +24,8 @@ function formatTime(seconds: number): string {
   return `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
 }
 
+
+
 export function RecordingControl({
   recording,
   paused,
@@ -37,338 +40,180 @@ export function RecordingControl({
 }: RecordingControlProps) {
   const router = useRouter();
 
-  return (
-    <div
-      style={{
-        marginBottom: 40,
-        padding: 32,
-        background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-        borderRadius: 16,
-        position: "relative",
-      }}
-    >
-
-      <div
-        style={{
-          marginBottom: 24,
-          display: "flex",
-          alignItems: "center",
-          gap: 16,
-        }}
-      >
-        <div>
-          <h2
-            style={{
-              fontSize: 24,
-              marginBottom: 8,
-              fontWeight: 700,
-              display: "flex",
-              alignItems: "center",
-              gap: 12,
-            }}
-          >
-            🎙️ 1단계: 음성 녹음
-            {recordingCompleted && (
-              <span
-                style={{
-                  padding: "6px 16px",
-                  background: "#27ae60",
-                  borderRadius: 8,
-                  fontSize: 14,
-                  fontWeight: 600,
-                }}
-              >
-                ✓ 완료
-              </span>
-            )}
-          </h2>
-          <p style={{ opacity: 0.9, fontSize: 14, maxWidth: 600 }}>
-            마이크를 사용해서 실시간으로 녹음하세요
-          </p>
-        </div>
+  if (recordingCompleted && currentSessionId) {
+    return (
+      <div style={{ ...sectionStyle, textAlign: "center", padding: 48 }}>
+        <div style={{ fontSize: 64, marginBottom: 24 }}>🎉</div>
+        <h3 style={{ fontSize: 24, marginBottom: 12, fontWeight: 700, color: "var(--text-primary)" }}>
+          녹음이 완료되었습니다!
+        </h3>
+        <p style={{ color: "var(--text-secondary)", marginBottom: 32, fontSize: 17 }}>
+          이제 AI가 텍스트 변환과 요약을 시작합니다.
+        </p>
+        <button
+          onClick={() => router.push(`/sessions/${currentSessionId}`)}
+          style={btnLarge}
+        >
+          결과 확인하기 →
+        </button>
       </div>
+    );
+  }
 
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "center",
-          gap: 16,
-          flexWrap: "wrap",
-        }}
-      >
-        {/* Stage 1: Recording completed - show next step button */}
-        {recordingCompleted ? (
-          <div
-            style={{
-              padding: "32px 48px",
-              background: "rgba(255, 255, 255, 0.1)",
-              borderRadius: 16,
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              justifyContent: "center",
-              minWidth: 320,
-              gap: 16,
-            }}
+  return (
+    <div style={{
+      ...sectionStyle,
+      padding: 40,
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      minHeight: 300,
+      position: 'relative',
+      overflow: 'hidden'
+    }}>
+      {!recording ? (
+        <div style={{ textAlign: "center", width: '100%' }}>
+          <div style={{ 
+            width: 80, 
+            height: 80, 
+            background: 'rgba(59, 130, 246, 0.1)', 
+            borderRadius: '50%', 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center',
+            margin: '0 auto 24px',
+            color: 'var(--primary-color)',
+            fontSize: 32,
+            border: '1px solid rgba(59, 130, 246, 0.2)'
+          }}>
+            🎤
+          </div>
+          <h3 style={{ fontSize: 22, fontWeight: 700, marginBottom: 12, color: "var(--text-primary)" }}>
+            강의 녹음 시작
+          </h3>
+          <p style={{ color: "var(--text-secondary)", marginBottom: 32, fontSize: 16 }}>
+            버튼을 눌러 녹음을 시작하세요.
+          </p>
+          <button
+            onClick={onStartRecording}
+            disabled={pending}
+            style={btnLarge}
           >
+            녹음 시작
+          </button>
+        </div>
+      ) : (
+        <div style={{ width: "100%", textAlign: "center" }}>
+          {/* Status Indicator */}
+          <div style={{ 
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 8,
+            padding: '8px 16px',
+            background: paused ? 'rgba(239, 68, 68, 0.1)' : 'rgba(59, 130, 246, 0.1)',
+            borderRadius: 20,
+            marginBottom: 32,
+            border: `1px solid ${paused ? 'rgba(239, 68, 68, 0.2)' : 'rgba(59, 130, 246, 0.2)'}`
+          }}>
+            <div style={{
+              width: 8,
+              height: 8,
+              borderRadius: '50%',
+              background: paused ? '#EF4444' : 'var(--primary-color)',
+              animation: paused ? 'none' : 'pulse 1.5s infinite'
+            }} />
+            <span style={{ 
+              fontSize: 14, 
+              fontWeight: 600, 
+              color: paused ? '#EF4444' : 'var(--primary-color)' 
+            }}>
+              {paused ? "일시정지됨" : "녹음 중..."}
+            </span>
+          </div>
+
+          {/* Timer */}
+          <div style={{ 
+            fontSize: 72, 
+            fontWeight: 800, 
+            fontVariantNumeric: "tabular-nums",
+            marginBottom: 40,
+            color: "var(--text-primary)",
+            letterSpacing: "-0.03em",
+            textShadow: "0 0 40px rgba(59, 130, 246, 0.2)"
+          }}>
+            {formatTime(recordingTime)}
+          </div>
+
+          {/* Controls */}
+          <div style={{ display: "flex", gap: 16, justifyContent: "center" }}>
+            {!paused ? (
+              <button
+                onClick={onPauseRecording}
+                style={{
+                  padding: "16px",
+                  background: "#27272A",
+                  border: "1px solid var(--border-color)",
+                  cursor: "pointer",
+                  width: 64,
+                  height: 64,
+                  borderRadius: 20,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: 24,
+                  color: "var(--text-primary)"
+                }}
+                title="일시정지"
+              >
+                ⏸
+              </button>
+            ) : (
+              <button
+                onClick={onResumeRecording}
+                style={{
+                  padding: "16px",
+                  background: "#27272A",
+                  border: "1px solid var(--border-color)",
+                  cursor: "pointer",
+                  width: 64,
+                  height: 64,
+                  borderRadius: 20,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: 24,
+                  color: "var(--primary-color)"
+                }}
+                title="계속 녹음"
+              >
+                ▶
+              </button>
+            )}
+            
             <button
-              onClick={() => {
-                if (currentSessionId) {
-                  router.push(`/sessions/${currentSessionId}?autoStart=true`);
-                }
-              }}
+              onClick={onStopRecording}
               style={{
-                padding: "18px 36px",
-                background: "#27ae60",
+                padding: "0 32px",
+                height: 64,
+                borderRadius: 20,
+                fontSize: 18,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                background: "#EF4444",
                 color: "#fff",
-                borderRadius: 12,
                 border: "none",
                 cursor: "pointer",
-                fontSize: 18,
-                fontWeight: 700,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: 8,
-                transition: "all 0.3s",
-                boxShadow: "0 4px 12px rgba(0,0,0,0.3)",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = "scale(1.05)";
-                e.currentTarget.style.boxShadow = "0 6px 16px rgba(0,0,0,0.4)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = "scale(1)";
-                e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.3)";
+                fontWeight: 600
               }}
             >
-              다음 단계로 (텍스트 변환) →
+              <span style={{ fontSize: 16 }}>⏹</span> 녹음 종료
             </button>
           </div>
-        ) : !recording ? (
-          /* Stage 0: Not recording - show start button */
-          <button
-            disabled={pending}
-            onClick={onStartRecording}
-            style={{
-              padding: "48px 64px",
-              background: "#e74c3c",
-              color: "#fff",
-              borderRadius: 20,
-              border: "none",
-              cursor: pending ? "not-allowed" : "pointer",
-              fontSize: 16,
-              fontWeight: 700,
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              justifyContent: "center",
-              transition: "all 0.3s",
-              boxShadow: "0 8px 24px rgba(0,0,0,0.4)",
-              opacity: pending ? 0.5 : 1,
-              minWidth: 320,
-            }}
-            onMouseEnter={(e) => {
-              if (!pending) {
-                e.currentTarget.style.transform = "scale(1.05)";
-                e.currentTarget.style.boxShadow =
-                  "0 12px 32px rgba(0,0,0,0.5)";
-              }
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = "scale(1)";
-              e.currentTarget.style.boxShadow = "0 8px 24px rgba(0,0,0,0.4)";
-            }}
-          >
-            <span style={{ fontSize: 56, marginBottom: 12 }}>🎤</span>
-            <div style={{ fontSize: 22, fontWeight: 700 }}>녹음 시작</div>
-            <div style={{ fontSize: 14, opacity: 0.9, marginTop: 8 }}>
-              클릭하면 바로 녹음이 시작됩니다
-            </div>
-          </button>
-        ) : (
-          /* Stage 0.5: Currently recording - show recording indicator and small buttons */
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              gap: 32,
-              padding: "32px",
-            }}
-          >
-            {/* Recording Indicator */}
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                gap: 16,
-              }}
-            >
-              {/* Status with breathing dot */}
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 16,
-                }}
-              >
-                {/* Breathing green dot */}
-                {!paused && (
-                  <div
-                    style={{
-                      width: 24,
-                      height: 24,
-                      borderRadius: "50%",
-                      background: "#27ae60",
-                      animation: "breathe 2s ease-in-out infinite",
-                      boxShadow: "0 0 20px rgba(39, 174, 96, 0.8)",
-                    }}
-                  />
-                )}
-                {paused && (
-                  <div
-                    style={{
-                      width: 24,
-                      height: 24,
-                      borderRadius: "50%",
-                      background: "#f39c12",
-                      boxShadow: "0 0 20px rgba(243, 156, 18, 0.8)",
-                    }}
-                  />
-                )}
-                <div
-                  style={{
-                    fontSize: 20,
-                    fontWeight: 700,
-                    color: "#fff",
-                  }}
-                >
-                  {paused ? "녹음 일시정지 중" : "녹음 진행 중"}
-                </div>
-              </div>
 
-              {/* Recording Time */}
-              <div
-                style={{
-                  fontSize: 24,
-                  fontWeight: 600,
-                  color: "#fff",
-                  fontFamily: "monospace",
-                  letterSpacing: "0.1em",
-                  opacity: 0.95,
-                }}
-              >
-                {formatTime(recordingTime)}
-              </div>
-            </div>
-
-            {/* Control Buttons */}
-            <div
-              style={{
-                display: "flex",
-                gap: 12,
-                marginTop: 8,
-              }}
-            >
-              {/* Pause/Resume Button */}
-              {!paused ? (
-                <button
-                  onClick={onPauseRecording}
-                  style={{
-                    padding: "12px 24px",
-                    background: "#f39c12",
-                    color: "#fff",
-                    borderRadius: 8,
-                    border: "none",
-                    cursor: "pointer",
-                    fontSize: 14,
-                    fontWeight: 600,
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 8,
-                    transition: "all 0.2s",
-                    boxShadow: "0 2px 8px rgba(0,0,0,0.3)",
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = "translateY(-2px)";
-                    e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.4)";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = "translateY(0)";
-                    e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.3)";
-                  }}
-                >
-                  <span style={{ fontSize: 18 }}>⏸️</span>
-                  녹음 중지
-                </button>
-              ) : (
-                <button
-                  onClick={onResumeRecording}
-                  style={{
-                    padding: "12px 24px",
-                    background: "#27ae60",
-                    color: "#fff",
-                    borderRadius: 8,
-                    border: "none",
-                    cursor: "pointer",
-                    fontSize: 14,
-                    fontWeight: 600,
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 8,
-                    transition: "all 0.2s",
-                    boxShadow: "0 2px 8px rgba(0,0,0,0.3)",
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = "translateY(-2px)";
-                    e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.4)";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = "translateY(0)";
-                    e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.3)";
-                  }}
-                >
-                  <span style={{ fontSize: 18 }}>▶️</span>
-                  녹음 재개
-                </button>
-              )}
-
-              {/* Stop Button */}
-              <button
-                onClick={onStopRecording}
-                style={{
-                  padding: "12px 24px",
-                  background: "#c0392b",
-                  color: "#fff",
-                  borderRadius: 8,
-                  border: "none",
-                  cursor: "pointer",
-                  fontSize: 14,
-                  fontWeight: 600,
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 8,
-                  transition: "all 0.2s",
-                  boxShadow: "0 2px 8px rgba(0,0,0,0.3)",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = "translateY(-2px)";
-                  e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.4)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = "translateY(0)";
-                  e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.3)";
-                }}
-              >
-                <span style={{ fontSize: 18 }}>⏹️</span>
-                녹음 종료
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }

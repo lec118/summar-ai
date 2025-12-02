@@ -45,10 +45,10 @@ export function StepCard({
     <div
       style={{
         padding: 16,
-        background: completed ? "#1e4d2b" : active ? "#2c3e50" : "#0f1530",
+        background: completed ? "rgba(34, 197, 94, 0.1)" : active ? "rgba(250, 204, 21, 0.1)" : "var(--card-bg)",
         borderRadius: 12,
-        border: `2px solid ${
-          completed ? "#27ae60" : active ? "#f39c12" : "#334"
+        border: `1px solid ${
+          completed ? "#22C55E" : active ? "#FACC15" : "var(--border-color)"
         }`,
         textAlign: "center",
       }}
@@ -58,12 +58,12 @@ export function StepCard({
           fontSize: 24,
           fontWeight: 700,
           marginBottom: 8,
-          color: completed ? "#27ae60" : active ? "#f39c12" : "#fff",
+          color: completed ? "#22C55E" : active ? "#FACC15" : "var(--text-secondary)",
         }}
       >
         {completed ? "✓" : number}
       </div>
-      <div style={{ fontSize: 14, fontWeight: 600 }}>
+      <div style={{ fontSize: 14, fontWeight: 600, wordBreak: "keep-all", overflowWrap: "anywhere", color: "var(--text-primary)" }}>
         {title}
         {optional && (
           <span style={{ fontSize: 11, opacity: 0.6, marginLeft: 4 }}>
@@ -91,10 +91,10 @@ export function Section({
       style={{
         marginBottom: 32,
         padding: 24,
-        background: "#0f1530",
+        background: "var(--card-bg)",
         borderRadius: 16,
-        border: `2px solid ${
-          completed ? "#27ae60" : active ? "#f39c12" : "#334"
+        border: `1px solid ${
+          completed ? "#22C55E" : active ? "#FACC15" : "var(--border-color)"
         }`,
       }}
     >
@@ -106,6 +106,7 @@ export function Section({
           display: "flex",
           alignItems: "center",
           gap: 8,
+          color: "var(--text-primary)",
         }}
       >
         {title}
@@ -113,7 +114,8 @@ export function Section({
           <span
             style={{
               padding: "4px 12px",
-              background: "#27ae60",
+              background: "rgba(34, 197, 94, 0.2)",
+              color: "#22C55E",
               borderRadius: 8,
               fontSize: 14,
             }}
@@ -125,7 +127,8 @@ export function Section({
           <span
             style={{
               padding: "4px 12px",
-              background: "#f39c12",
+              background: "rgba(250, 204, 21, 0.2)",
+              color: "#FACC15",
               borderRadius: 8,
               fontSize: 14,
             }}
@@ -144,12 +147,12 @@ export function StatusBadge({ status }: { status: SessionStatus }) {
     SessionStatus,
     { label: string; color: string; bg: string }
   > = {
-    idle: { label: "대기 중", color: "#95a5a6", bg: "#2c3e50" },
-    recording: { label: "녹음 중", color: "#e74c3c", bg: "#3d1f1f" },
-    uploaded: { label: "업로드 완료", color: "#3498db", bg: "#1a2a3a" },
-    processing: { label: "처리 중", color: "#f39c12", bg: "#3d2f1f" },
-    completed: { label: "완료", color: "#27ae60", bg: "#1e4d2b" },
-    error: { label: "오류", color: "#e74c3c", bg: "#3d1f1f" },
+    idle: { label: "대기 중", color: "var(--text-secondary)", bg: "var(--card-bg)" },
+    recording: { label: "녹음 중", color: "#EF4444", bg: "rgba(239, 68, 68, 0.1)" },
+    uploaded: { label: "업로드 완료", color: "var(--primary-color)", bg: "rgba(59, 130, 246, 0.1)" },
+    processing: { label: "처리 중", color: "#FACC15", bg: "rgba(250, 204, 21, 0.1)" },
+    completed: { label: "완료", color: "#22C55E", bg: "rgba(34, 197, 94, 0.1)" },
+    error: { label: "오류", color: "#EF4444", bg: "rgba(239, 68, 68, 0.1)" },
   };
 
   const config = statusConfig[status];
@@ -185,24 +188,25 @@ export function MetricCard({
   const color =
     value >= 0.7
       ? inverted
-        ? "#e74c3c"
-        : "#27ae60"
+        ? "#EF4444"
+        : "#22C55E"
       : value >= 0.4
-      ? "#f39c12"
+      ? "#FACC15"
       : inverted
-      ? "#27ae60"
-      : "#e74c3c";
+      ? "#22C55E"
+      : "#EF4444";
 
   return (
     <div
       style={{
         padding: 16,
-        background: "#12183a",
+        background: "var(--bg-color)",
         borderRadius: 8,
         textAlign: "center",
+        border: "1px solid var(--border-color)",
       }}
     >
-      <div style={{ fontSize: 12, opacity: 0.7, marginBottom: 8 }}>
+      <div style={{ fontSize: 12, opacity: 0.7, marginBottom: 8, color: "var(--text-secondary)" }}>
         {label}
       </div>
       <div style={{ fontSize: 24, fontWeight: 700, color }}>{percentage}%</div>
@@ -218,10 +222,11 @@ export function TranscriptList({ transcript }: { transcript: TranscriptParagraph
           key={para.id}
           style={{
             padding: 16,
-            background: "#12183a",
+            background: "var(--bg-color)",
             borderRadius: 8,
             marginBottom: 12,
-            borderLeft: "3px solid #5865f2",
+            borderLeft: "3px solid var(--primary-color)",
+            border: "1px solid var(--border-color)",
           }}
         >
           <div
@@ -229,6 +234,7 @@ export function TranscriptList({ transcript }: { transcript: TranscriptParagraph
               fontSize: 12,
               opacity: 0.6,
               marginBottom: 8,
+              color: "var(--text-secondary)",
             }}
           >
             문단 {idx + 1}
@@ -240,7 +246,7 @@ export function TranscriptList({ transcript }: { transcript: TranscriptParagraph
               </span>
             )}
           </div>
-          <p style={{ lineHeight: 1.6 }}>{para.text}</p>
+          <p style={{ lineHeight: 1.6, wordBreak: "break-word", overflowWrap: "anywhere", color: "var(--text-primary)" }}>{para.text}</p>
         </div>
       ))}
     </div>
@@ -255,12 +261,13 @@ export function SummaryItemList({ items }: { items: SummaryItem[] }) {
           key={item.id}
           style={{
             padding: 16,
-            background: "#12183a",
+            background: "var(--bg-color)",
             borderRadius: 8,
             marginBottom: 12,
             borderLeft: `3px solid ${
-              item.level === "overall" ? "#f39c12" : "#5865f2"
+              item.level === "overall" ? "#FACC15" : "var(--primary-color)"
             }`,
+            border: "1px solid var(--border-color)",
           }}
         >
           <div
@@ -276,21 +283,22 @@ export function SummaryItemList({ items }: { items: SummaryItem[] }) {
                 fontSize: 12,
                 padding: "4px 8px",
                 background:
-                  item.level === "overall" ? "#f39c12" : "#5865f2",
+                  item.level === "overall" ? "rgba(250, 204, 21, 0.2)" : "rgba(59, 130, 246, 0.2)",
+                color: item.level === "overall" ? "#FACC15" : "var(--primary-color)",
                 borderRadius: 6,
               }}
             >
               {item.level === "overall" ? "전체" : `세그먼트 ${idx + 1}`}
             </span>
-            <span style={{ fontSize: 12, opacity: 0.6 }}>
+            <span style={{ fontSize: 12, opacity: 0.6, color: "var(--text-secondary)" }}>
               점수: {(item.score * 100).toFixed(1)}%
             </span>
           </div>
-          <p style={{ lineHeight: 1.6, marginBottom: 8 }}>
+          <p style={{ lineHeight: 1.6, marginBottom: 8, wordBreak: "break-word", overflowWrap: "anywhere", color: "var(--text-primary)" }}>
             {item.text}
           </p>
           {item.evidence_ids.length > 0 && (
-            <div style={{ fontSize: 12, opacity: 0.6 }}>
+            <div style={{ fontSize: 12, opacity: 0.6, color: "var(--text-secondary)" }}>
               증거: {item.evidence_ids.length}개
             </div>
           )}

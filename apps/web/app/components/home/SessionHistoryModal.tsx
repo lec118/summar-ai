@@ -38,14 +38,15 @@ export function SessionHistoryModal({
     >
       <div
         style={{
-          background: "#0f1530",
-          borderRadius: 16,
+          background: "var(--card-bg)",
+          borderRadius: 24,
           padding: 32,
           maxWidth: 900,
           width: "90%",
           maxHeight: "80vh",
           overflow: "auto",
           boxShadow: "0 20px 60px rgba(0,0,0,0.5)",
+          border: "1px solid var(--border-color)",
         }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -57,18 +58,19 @@ export function SessionHistoryModal({
             marginBottom: 24,
           }}
         >
-          <h2 style={{ fontSize: 24, fontWeight: 700 }}>📋 녹음 기록</h2>
+          <h2 style={{ fontSize: 24, fontWeight: 700, color: "var(--text-primary)" }}>📋 녹음 기록</h2>
           <button
             onClick={onClose}
             style={{
               padding: "8px 16px",
-              background: "#555",
-              color: "#fff",
-              borderRadius: 8,
-              border: "none",
+              background: "#27272A",
+              color: "var(--text-secondary)",
+              borderRadius: 12,
+              border: "1px solid var(--border-color)",
               cursor: "pointer",
               fontSize: 14,
               fontWeight: 600,
+              transition: "all 0.2s",
             }}
           >
             ✕ 닫기
@@ -79,13 +81,14 @@ export function SessionHistoryModal({
           style={{
             width: "100%",
             borderCollapse: "collapse",
-            background: "#12183a",
-            borderRadius: 12,
+            background: "var(--bg-color)",
+            borderRadius: 16,
             overflow: "hidden",
+            border: "1px solid var(--border-color)",
           }}
         >
           <thead>
-            <tr style={{ background: "#1a2045" }}>
+            <tr style={{ background: "#27272A", borderBottom: "1px solid var(--border-color)" }}>
               <th style={th}>번호</th>
               <th style={th}>생성 일시</th>
               <th style={th}>상태</th>
@@ -99,13 +102,14 @@ export function SessionHistoryModal({
                 style={{
                   cursor: "pointer",
                   transition: "background 0.2s",
+                  borderBottom: "1px solid var(--border-color)",
                 }}
                 onClick={() => {
                   onClose();
                   onSessionClick(s.id);
                 }}
                 onMouseEnter={(e) =>
-                  (e.currentTarget.style.background = "#1e2550")
+                  (e.currentTarget.style.background = "#27272A")
                 }
                 onMouseLeave={(e) =>
                   (e.currentTarget.style.background = "transparent")
@@ -121,13 +125,26 @@ export function SessionHistoryModal({
                       padding: "4px 12px",
                       borderRadius: 12,
                       fontSize: 13,
+                      fontWeight: 600,
                       background:
                         s.status === "completed"
-                          ? "#27ae60"
+                          ? "rgba(34, 197, 94, 0.15)"
                           : s.status === "processing"
-                          ? "#f39c12"
-                          : "#95a5a6",
-                      color: "#fff",
+                          ? "rgba(250, 204, 21, 0.15)"
+                          : "rgba(113, 113, 122, 0.15)",
+                      color:
+                        s.status === "completed"
+                          ? "#22C55E"
+                          : s.status === "processing"
+                          ? "#FACC15"
+                          : "var(--text-secondary)",
+                      border: `1px solid ${
+                        s.status === "completed"
+                          ? "rgba(34, 197, 94, 0.3)"
+                          : s.status === "processing"
+                          ? "rgba(250, 204, 21, 0.3)"
+                          : "rgba(113, 113, 122, 0.3)"
+                      }`,
                     }}
                   >
                     {s.status === "idle"
@@ -146,7 +163,7 @@ export function SessionHistoryModal({
                       onClose();
                       onSessionClick(s.id);
                     }}
-                    style={{ ...btnSm, background: "#27ae60" }}
+                    style={{ ...btnSm, background: "var(--primary-color)", boxShadow: "none" }}
                   >
                     열기
                   </button>
@@ -155,7 +172,7 @@ export function SessionHistoryModal({
                       e.stopPropagation();
                       onDeleteSession(s);
                     }}
-                    style={{ ...btnSm, background: "#e74c3c" }}
+                    style={{ ...btnSm, background: "#EF4444", boxShadow: "none" }}
                   >
                     삭제
                   </button>
@@ -170,7 +187,8 @@ export function SessionHistoryModal({
                     ...td,
                     textAlign: "center",
                     opacity: 0.6,
-                    padding: 24,
+                    padding: 40,
+                    color: "var(--text-secondary)",
                   }}
                 >
                   아직 녹음이 없습니다. 녹음을 시작하거나 파일을 업로드하세요.

@@ -73,17 +73,19 @@ export default function SessionDetailPage({
           style={{
             textAlign: "center",
             padding: 60,
-            background: "#0f1530",
-            borderRadius: 16,
+            background: "var(--card-bg)",
+            borderRadius: 24,
             maxWidth: 600,
             margin: "60px auto",
+            boxShadow: "var(--shadow-md)",
+            border: "1px solid var(--border-color)",
           }}
         >
           <div style={{ fontSize: 48, marginBottom: 16 }}>❌</div>
-          <h2 style={{ fontSize: 20, marginBottom: 16, color: "#e74c3c" }}>
+          <h2 style={{ fontSize: 20, marginBottom: 16, color: "#EF4444", fontWeight: 700 }}>
             오류 발생
           </h2>
-          <p style={{ opacity: 0.8, marginBottom: 24 }}>{error}</p>
+          <p style={{ color: "var(--text-secondary)", marginBottom: 24 }}>{error}</p>
           <button onClick={() => router.push("/")} style={btnPrimary}>
             ← 홈으로 돌아가기
           </button>
@@ -108,10 +110,10 @@ export default function SessionDetailPage({
         >
           ← 홈으로 돌아가기
         </button>
-        <h1 style={{ fontSize: 32, marginBottom: 8, fontWeight: 700 }}>
+        <h1 style={{ fontSize: 32, marginBottom: 8, fontWeight: 700, color: "var(--text-primary)" }}>
           🎯 세션 상세
         </h1>
-        <p style={{ opacity: 0.7, fontSize: 14 }}>
+        <p style={{ opacity: 0.7, fontSize: 14, color: "var(--text-secondary)" }}>
           세션 ID: <code style={codeStyle}>{sessionId}</code>
         </p>
         <div style={{ marginTop: 8 }}>
@@ -120,15 +122,15 @@ export default function SessionDetailPage({
       </div>
 
       {/* Error Display */}
-      {error && !error.includes("Bad Request") && (
+      {error && (
         <div
           style={{
             padding: 16,
-            background: "#3d1f1f",
-            border: "1px solid #e74c3c",
+            background: "rgba(239, 68, 68, 0.1)",
+            border: "1px solid rgba(239, 68, 68, 0.2)",
             borderRadius: 12,
             marginBottom: 24,
-            color: "#ff6b6b",
+            color: "#EF4444",
           }}
         >
           ❌ {error}
@@ -143,21 +145,22 @@ export default function SessionDetailPage({
             top: 24,
             right: 24,
             padding: 20,
-            background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+            background: "var(--card-bg)",
             borderRadius: 16,
-            boxShadow: "0 8px 32px rgba(0,0,0,0.3)",
+            boxShadow: "0 8px 32px rgba(0,0,0,0.5)",
             zIndex: 9999,
             maxWidth: 400,
             animation: "slideIn 0.3s ease-out",
+            border: "1px solid var(--primary-color)",
           }}
         >
           <div style={{ display: "flex", alignItems: "flex-start", gap: 16 }}>
             <div style={{ fontSize: 32, flexShrink: 0 }}>✅</div>
             <div>
-              <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 8, color: "#fff" }}>
+              <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 8, color: "var(--text-primary)" }}>
                 변환 시작됨
               </div>
-              <div style={{ fontSize: 14, opacity: 0.9, lineHeight: 1.5, color: "#fff" }}>
+              <div style={{ fontSize: 14, color: "var(--text-secondary)", lineHeight: 1.5 }}>
                 {successMessage}
               </div>
             </div>
@@ -210,18 +213,19 @@ export default function SessionDetailPage({
           session?.status !== "idle" && session?.status !== "recording"
         }
       >
-        <p style={{ opacity: 0.8, marginBottom: 16 }}>
-          세그먼트 수: <strong>{segments.length}개</strong>
+        <p style={{ opacity: 0.8, marginBottom: 16, color: "var(--text-secondary)" }}>
+          세그먼트 수: <strong style={{ color: "var(--text-primary)" }}>{segments.length}개</strong>
         </p>
 
         {session?.status === "idle" && segments.length === 0 && (
           <div
             style={{
-              padding: 16,
-              background: "#12183a",
-              borderRadius: 8,
-              fontSize: 14,
-              color: "#99aab5",
+              padding: 20,
+              background: "var(--bg-color)",
+              borderRadius: 16,
+              fontSize: 15,
+              color: "var(--text-secondary)",
+              border: "1px solid var(--border-color)",
             }}
           >
             💡 홈 페이지로 돌아가서 녹음을 시작하세요.
@@ -231,10 +235,13 @@ export default function SessionDetailPage({
         {session?.status === "uploaded" && segments.length > 0 && (
           <div
             style={{
-              padding: 12,
-              background: "#12183a",
-              borderRadius: 8,
-              fontSize: 14,
+              padding: 16,
+              background: "rgba(59, 130, 246, 0.1)",
+              borderRadius: 16,
+              fontSize: 15,
+              color: "var(--primary-color)",
+              fontWeight: 600,
+              border: "1px solid rgba(59, 130, 246, 0.2)",
             }}
           >
             ✓ 음성 파일이 성공적으로 업로드되었습니다.
@@ -244,13 +251,15 @@ export default function SessionDetailPage({
         {session?.status === "processing" && (
           <div
             style={{
-              padding: 16,
-              background: "#12183a",
-              borderRadius: 8,
-              fontSize: 14,
+              padding: 20,
+              background: "rgba(250, 204, 21, 0.1)",
+              borderRadius: 16,
+              fontSize: 15,
               display: "flex",
               alignItems: "center",
               gap: 12,
+              color: "#FACC15",
+              border: "1px solid rgba(250, 204, 21, 0.2)",
             }}
           >
             <div style={{ animation: "pulse 1.5s infinite" }}>⏳</div>
@@ -261,10 +270,13 @@ export default function SessionDetailPage({
         {session?.status === "completed" && (
           <div
             style={{
-              padding: 12,
-              background: "#0f4c20",
-              borderRadius: 8,
-              fontSize: 14,
+              padding: 16,
+              background: "rgba(34, 197, 94, 0.1)",
+              borderRadius: 16,
+              fontSize: 15,
+              color: "#22C55E",
+              fontWeight: 600,
+              border: "1px solid rgba(34, 197, 94, 0.2)",
             }}
           >
             ✓ 텍스트 변환이 완료되었습니다!
@@ -296,19 +308,19 @@ export default function SessionDetailPage({
             {/* Real-time process feedback */}
             {transcriptionStep && (
               <div style={{
-                marginTop: 16,
-                padding: 16,
-                background: "#2c3e50",
-                borderRadius: 8,
-                border: "2px solid #f39c12",
+                marginTop: 24,
+                padding: 20,
+                background: "rgba(239, 68, 68, 0.1)",
+                borderRadius: 16,
+                border: "1px solid rgba(239, 68, 68, 0.2)",
                 display: "flex",
                 alignItems: "center",
-                gap: 12
+                gap: 16
               }}>
                 <div style={{ fontSize: 24, animation: "pulse 1.5s infinite" }}>⚙️</div>
                 <div>
-                  <div style={{ fontWeight: 600, color: "#f39c12", marginBottom: 4 }}>진행 중</div>
-                  <div style={{ fontSize: 14, opacity: 0.9 }}>{transcriptionStep}</div>
+                  <div style={{ fontWeight: 700, color: "#EF4444", marginBottom: 4 }}>진행 중</div>
+                  <div style={{ fontSize: 15, color: "var(--text-secondary)" }}>{transcriptionStep}</div>
                 </div>
               </div>
             )}
@@ -316,29 +328,29 @@ export default function SessionDetailPage({
         )}
 
         {!canStartTranscription && !isTranscribing && !isTranscriptReady && (
-          <div style={{ padding: 16, background: "#3d2f1f", borderRadius: 8, border: "1px solid #f39c12" }}>
-            ⚠️ 현재 상태: <strong>{session?.status}</strong><br/>
+          <div style={{ padding: 20, background: "var(--bg-color)", borderRadius: 16, border: "1px solid var(--border-color)", color: "var(--text-secondary)" }}>
+            ⚠️ 현재 상태: <strong style={{ color: "var(--text-primary)" }}>{session?.status}</strong><br/>
             텍스트 변환을 시작하려면 먼저 음성 파일을 업로드해야 합니다.
           </div>
         )}
 
         {isTranscribing && (
-          <div style={{ padding: 24, textAlign: "center" }}>
+          <div style={{ padding: 32, textAlign: "center" }}>
             <div
               style={{ fontSize: 48, marginBottom: 16, animation: "pulse 1.5s infinite" }}
             >
               ⏳
             </div>
-            <p style={{ fontSize: 18, fontWeight: 600, marginBottom: 24 }}>변환 중...</p>
+            <p style={{ fontSize: 20, fontWeight: 700, marginBottom: 24, color: "var(--text-primary)" }}>변환 중...</p>
 
             {/* Progress Bar */}
             <div style={{ maxWidth: 600, margin: "0 auto 24px" }}>
               <div
                 style={{
                   width: "100%",
-                  height: 8,
-                  background: "#12183a",
-                  borderRadius: 8,
+                  height: 12,
+                  background: "#27272A",
+                  borderRadius: 6,
                   overflow: "hidden",
                   position: "relative",
                 }}
@@ -346,8 +358,8 @@ export default function SessionDetailPage({
                 <div
                   style={{
                     height: "100%",
-                    background: "linear-gradient(90deg, #5865f2, #7289da)",
-                    borderRadius: 8,
+                    background: "var(--primary-color)",
+                    borderRadius: 6,
                     animation: "progressAnimation 2s ease-in-out infinite",
                     width: "100%",
                   }}
@@ -355,7 +367,7 @@ export default function SessionDetailPage({
               </div>
 
               {/* Process Steps */}
-              <div style={{ marginTop: 16, fontSize: 14 }}>
+              <div style={{ marginTop: 16, fontSize: 14, color: "var(--text-secondary)" }}>
                 <ProcessStep
                   icon="🎵"
                   text="오디오 파일 분석 중..."
@@ -374,7 +386,7 @@ export default function SessionDetailPage({
               </div>
             </div>
 
-            <p style={{ opacity: 0.7, fontSize: 14, marginTop: 8 }}>
+            <p style={{ opacity: 0.7, fontSize: 14, marginTop: 8, color: "var(--text-secondary)" }}>
               음성을 텍스트로 변환하고 있습니다. 잠시만 기다려주세요.
             </p>
           </div>
@@ -533,42 +545,7 @@ export default function SessionDetailPage({
         )}
       </Section>
 
-      <style jsx>{`
-        @keyframes pulse {
-          0%,
-          100% {
-            opacity: 1;
-          }
-          50% {
-            opacity: 0.5;
-          }
-        }
 
-        @keyframes progressAnimation {
-          0% {
-            transform: translateX(-100%);
-            opacity: 0.5;
-          }
-          50% {
-            opacity: 1;
-          }
-          100% {
-            transform: translateX(100%);
-            opacity: 0.5;
-          }
-        }
-
-        @keyframes slideIn {
-          from {
-            transform: translateX(100%);
-            opacity: 0;
-          }
-          to {
-            transform: translateX(0);
-            opacity: 1;
-          }
-        }
-      `}</style>
     </main>
   );
 }

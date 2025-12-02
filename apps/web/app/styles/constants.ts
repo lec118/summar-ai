@@ -3,49 +3,54 @@ import React from "react";
 // Common button styles
 export const btnPrimary: React.CSSProperties = {
   padding: "12px 20px",
-  background: "#5865f2",
+  background: "var(--primary-color)",
   color: "#fff",
   borderRadius: 12,
   border: "none",
   cursor: "pointer",
   fontSize: 15,
   fontWeight: 600,
-  transition: "all 0.2s",
+  transition: "all 0.2s ease",
+  boxShadow: "var(--shadow-sm)",
 };
 
 export const btnSecondary: React.CSSProperties = {
-  padding: "10px 20px",
-  background: "#0f1530",
+  padding: "12px 20px",
+  background: "#27272A", // Dark gray for secondary
   color: "#fff",
-  borderRadius: 10,
-  border: "1px solid #334",
+  borderRadius: 12,
+  border: "1px solid var(--border-color)",
   cursor: "pointer",
-  fontSize: 14,
+  fontSize: 15,
   fontWeight: 600,
-  transition: "all 0.2s",
+  transition: "all 0.2s ease",
+  boxShadow: "var(--shadow-sm)",
 };
 
 export const btnLarge: React.CSSProperties = {
   padding: "24px 48px",
-  background: "#5865f2",
+  background: "var(--primary-color)",
   color: "#fff",
   borderRadius: 16,
   border: "none",
   cursor: "pointer",
-  fontSize: 16,
-  fontWeight: 600,
+  fontSize: 18,
+  fontWeight: 700,
   display: "flex",
   flexDirection: "column",
   alignItems: "center",
   justifyContent: "center",
-  transition: "all 0.3s",
-  boxShadow: "0 4px 12px rgba(0,0,0,0.3)",
+  transition: "all 0.2s ease",
+  boxShadow: "var(--shadow-md)",
+  width: "100%",
+  maxWidth: "400px",
+  margin: "0 auto",
 };
 
 export const btnSm: React.CSSProperties = {
   padding: "8px 16px",
   borderRadius: 8,
-  background: "#5865f2",
+  background: "var(--primary-color)",
   marginRight: 8,
   color: "#fff",
   border: "none",
@@ -57,78 +62,90 @@ export const btnSm: React.CSSProperties = {
 
 // Common layout styles
 export const mainStyle: React.CSSProperties = {
-  maxWidth: 1200,
+  maxWidth: 1000,
   margin: "0 auto",
-  padding: 24,
+  padding: "60px 24px",
   minHeight: "100vh",
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
 };
 
 export const sectionStyle: React.CSSProperties = {
-  marginBottom: 40,
-  padding: 24,
-  background: "#0f1530",
+  marginBottom: 32,
+  padding: 32,
+  background: "var(--card-bg)",
   borderRadius: 16,
+  boxShadow: "var(--shadow-sm)",
+  width: "100%",
+  border: "1px solid var(--border-color)",
 };
 
 export const codeStyle: React.CSSProperties = {
-  padding: "2px 8px",
-  background: "#12183a",
+  padding: "2px 6px",
+  background: "#27272A",
   borderRadius: 4,
-  fontSize: 13,
+  fontSize: 14,
   fontFamily: "monospace",
+  color: "var(--text-primary)",
+  fontWeight: 600,
 };
 
 // Table styles
 export const th: React.CSSProperties = {
   textAlign: "left",
-  padding: "12px 16px",
-  borderBottom: "2px solid #222",
+  padding: "16px",
+  borderBottom: "1px solid var(--border-color)",
   fontSize: 14,
   fontWeight: 600,
-  opacity: 0.9,
+  color: "var(--text-secondary)",
 };
 
 export const td: React.CSSProperties = {
-  padding: "14px 16px",
-  borderBottom: "1px solid #1a2045",
-  fontSize: 14,
+  padding: "16px",
+  borderBottom: "1px solid var(--border-color)",
+  fontSize: 15,
+  color: "var(--text-primary)",
 };
 
 // Form styles
 export const inputStyle: React.CSSProperties = {
-  padding: "12px 16px",
-  borderRadius: 8,
-  background: "#0f1530",
-  color: "#fff",
-  border: "1px solid #334",
-  fontSize: 15,
+  padding: "16px 20px",
+  borderRadius: 12,
+  background: "#27272A",
+  color: "var(--text-primary)",
+  border: "1px solid var(--border-color)",
+  fontSize: 16,
   outline: "none",
+  transition: "all 0.2s",
+  width: "100%",
 };
 
 export const selectStyle: React.CSSProperties = {
-  padding: "12px 16px",
+  padding: "16px 20px",
   borderRadius: 12,
-  background: "#192041",
-  color: "#fff",
-  border: "1px solid #334",
-  fontSize: 15,
+  background: "#27272A",
+  color: "var(--text-primary)",
+  border: "1px solid var(--border-color)",
+  fontSize: 16,
   cursor: "pointer",
   minWidth: 300,
+  boxShadow: "var(--shadow-sm)",
 };
 
-// Color palette
+// Color palette (kept for reference, but prefer using CSS variables)
 export const colors = {
-  primary: "#5865f2",
-  success: "#27ae60",
-  warning: "#f39c12",
-  danger: "#e74c3c",
-  info: "#3498db",
-  muted: "#95a5a6",
+  primary: "#3B82F6",
+  success: "#22C55E",
+  warning: "#FACC15",
+  danger: "#EF4444",
+  info: "#3B82F6",
+  muted: "#71717A",
 
-  bgPrimary: "#0f1530",
-  bgSecondary: "#12183a",
-  bgTertiary: "#192041",
+  bgPrimary: "#09090b",
+  bgSecondary: "#18181b",
+  bgTertiary: "#27272A",
 
-  border: "#334",
-  borderLight: "rgba(255,255,255,0.1)",
+  border: "#27272A",
+  borderLight: "#3F3F46",
 };
