@@ -1,5 +1,6 @@
 import React from "react";
 import { SessionStatus, TranscriptParagraph, SummaryItem } from "./types";
+import { formatTime } from "../../utils/time";
 
 // Helper Components
 export function ProcessStep({
@@ -16,14 +17,29 @@ export function ProcessStep({
       style={{
         display: "flex",
         alignItems: "center",
-        gap: 12,
-        padding: "8px 0",
+        gap: 16,
+        padding: "12px 0",
         opacity: completed ? 0.5 : 1,
+        transition: "opacity 0.3s ease",
       }}
     >
-      <span style={{ fontSize: 20 }}>{icon}</span>
-      <span style={{ opacity: 0.8 }}>{text}</span>
-      {completed && <span style={{ marginLeft: "auto", color: "var(--success-color)" }}>✓</span>}
+      <div style={{ 
+        fontSize: 24,
+        filter: completed ? "grayscale(1)" : "none",
+        textShadow: completed ? "none" : "0 0 10px rgba(255,255,255,0.3)"
+      }}>{icon}</div>
+      <span style={{ 
+        fontSize: 16, 
+        fontWeight: 500,
+        color: "var(--text-primary)" 
+      }}>{text}</span>
+      {completed && (
+        <span style={{ 
+          marginLeft: "auto", 
+          color: "var(--success-color)",
+          textShadow: "0 0 10px rgba(52, 211, 153, 0.4)"
+        }}>✓</span>
+      )}
     </div>
   );
 }
@@ -41,36 +57,55 @@ export function StepCard({
   active: boolean;
   optional?: boolean;
 }) {
+  const isActive = active && !completed;
+  
   return (
     <div
+      className="glass-panel"
       style={{
-        padding: 16,
-        background: completed ? "rgba(34, 197, 94, 0.1)" : active ? "rgba(250, 204, 21, 0.1)" : "var(--card-bg)",
-        borderRadius: 12,
-        border: `1px solid ${
-          completed ? "#22C55E" : active ? "#FACC15" : "var(--border-color)"
-        }`,
+        padding: 24,
+        borderRadius: 16,
         textAlign: "center",
-        minHeight: 100,
+        minHeight: 140,
         display: "flex",
         flexDirection: "column",
         justifyContent: "center",
+        alignItems: "center",
+        transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+        border: isActive ? "1px solid var(--primary-color)" : undefined,
+        boxShadow: isActive ? "0 0 20px var(--primary-glow)" : undefined,
+        transform: isActive ? "translateY(-4px)" : "none",
+        background: completed ? "rgba(52, 211, 153, 0.05)" : undefined,
       }}
     >
       <div
         style={{
-          fontSize: 24,
-          fontWeight: 700,
-          marginBottom: 8,
-          color: completed ? "#22C55E" : active ? "#FACC15" : "var(--text-secondary)",
+          fontSize: 32,
+          fontWeight: 800,
+          marginBottom: 12,
+          color: completed ? "var(--success-color)" : isActive ? "var(--primary-color)" : "var(--text-tertiary)",
+          textShadow: isActive ? "0 0 15px var(--primary-glow)" : "none",
         }}
       >
         {completed ? "✓" : number}
       </div>
-      <div style={{ fontSize: 14, fontWeight: 600, wordBreak: "keep-all", overflowWrap: "anywhere", color: "var(--text-primary)" }}>
+      <div style={{ 
+        fontSize: 15, 
+        fontWeight: 600, 
+        wordBreak: "keep-all", 
+        color: isActive ? "var(--text-primary)" : "var(--text-secondary)",
+        lineHeight: 1.5
+      }}>
         {title}
         {optional && (
-          <span style={{ fontSize: 11, opacity: 0.6, marginLeft: 4 }}>
+          <span style={{ 
+            fontSize: 11, 
+            opacity: 0.6, 
+            marginLeft: 6,
+            display: "block",
+            marginTop: 4,
+            fontWeight: 400
+          }}>
             (선택)
           </span>
         )}
@@ -92,26 +127,26 @@ export function Section({
 }) {
   return (
     <div
+      className="glass-panel"
       style={{
-        marginBottom: 32,
-        padding: 24,
-        background: "var(--card-bg)",
-        borderRadius: 16,
-        border: `1px solid ${
-          completed ? "#22C55E" : active ? "#FACC15" : "var(--border-color)"
-        }`,
+        marginBottom: 40,
+        padding: 32,
+        borderRadius: 24,
         width: "100%",
+        border: active ? "1px solid var(--primary-color)" : undefined,
+        boxShadow: active ? "0 0 30px rgba(139, 92, 246, 0.15)" : undefined,
       }}
     >
       <h2
         style={{
-          fontSize: 20,
-          marginBottom: 16,
-          fontWeight: 600,
+          fontSize: 24,
+          marginBottom: 24,
+          fontWeight: 700,
           display: "flex",
           alignItems: "center",
-          gap: 8,
+          gap: 12,
           color: "var(--text-primary)",
+          letterSpacing: "-0.02em",
         }}
       >
         {title}
@@ -119,10 +154,12 @@ export function Section({
           <span
             style={{
               padding: "4px 12px",
-              background: "rgba(34, 197, 94, 0.2)",
-              color: "#22C55E",
-              borderRadius: 8,
-              fontSize: 14,
+              background: "rgba(52, 211, 153, 0.1)",
+              color: "var(--success-color)",
+              borderRadius: 20,
+              fontSize: 13,
+              fontWeight: 600,
+              border: "1px solid rgba(52, 211, 153, 0.2)"
             }}
           >
             완료
@@ -132,10 +169,13 @@ export function Section({
           <span
             style={{
               padding: "4px 12px",
-              background: "rgba(250, 204, 21, 0.2)",
-              color: "#FACC15",
-              borderRadius: 8,
-              fontSize: 14,
+              background: "rgba(139, 92, 246, 0.1)",
+              color: "var(--primary-color)",
+              borderRadius: 20,
+              fontSize: 13,
+              fontWeight: 600,
+              border: "1px solid rgba(139, 92, 246, 0.2)",
+              boxShadow: "0 0 10px var(--primary-glow)"
             }}
           >
             진행 중
@@ -150,14 +190,44 @@ export function Section({
 export function StatusBadge({ status }: { status: SessionStatus }) {
   const statusConfig: Record<
     SessionStatus,
-    { label: string; color: string; bg: string }
+    { label: string; color: string; bg: string; border: string }
   > = {
-    idle: { label: "대기 중", color: "var(--text-secondary)", bg: "var(--card-bg)" },
-    recording: { label: "녹음 중", color: "var(--danger-color)", bg: "rgba(239, 68, 68, 0.1)" },
-    uploaded: { label: "업로드 완료", color: "var(--primary-color)", bg: "rgba(59, 130, 246, 0.1)" },
-    processing: { label: "처리 중", color: "var(--accent-color)", bg: "rgba(250, 204, 21, 0.1)" },
-    completed: { label: "완료", color: "var(--success-color)", bg: "rgba(34, 197, 94, 0.1)" },
-    error: { label: "오류", color: "var(--danger-color)", bg: "rgba(239, 68, 68, 0.1)" },
+    idle: { 
+      label: "대기 중", 
+      color: "var(--text-secondary)", 
+      bg: "rgba(255, 255, 255, 0.05)",
+      border: "rgba(255, 255, 255, 0.1)"
+    },
+    recording: { 
+      label: "녹음 중", 
+      color: "var(--danger-color)", 
+      bg: "rgba(248, 113, 113, 0.1)",
+      border: "rgba(248, 113, 113, 0.2)"
+    },
+    uploaded: { 
+      label: "업로드 완료", 
+      color: "var(--primary-color)", 
+      bg: "rgba(139, 92, 246, 0.1)",
+      border: "rgba(139, 92, 246, 0.2)"
+    },
+    processing: { 
+      label: "처리 중", 
+      color: "var(--accent-color)", 
+      bg: "rgba(244, 114, 182, 0.1)",
+      border: "rgba(244, 114, 182, 0.2)"
+    },
+    completed: { 
+      label: "완료", 
+      color: "var(--success-color)", 
+      bg: "rgba(52, 211, 153, 0.1)",
+      border: "rgba(52, 211, 153, 0.2)"
+    },
+    error: { 
+      label: "오류", 
+      color: "var(--danger-color)", 
+      bg: "rgba(248, 113, 113, 0.1)",
+      border: "rgba(248, 113, 113, 0.2)"
+    },
   };
 
   const config = statusConfig[status];
@@ -165,16 +235,22 @@ export function StatusBadge({ status }: { status: SessionStatus }) {
   return (
     <span
       style={{
-        display: "inline-block",
+        display: "inline-flex",
+        alignItems: "center",
         padding: "6px 16px",
         background: config.bg,
         color: config.color,
-        borderRadius: 8,
-        fontSize: 14,
+        borderRadius: 20,
+        fontSize: 13,
         fontWeight: 600,
-        border: `1px solid ${config.color}`,
+        border: `1px solid ${config.border}`,
+        boxShadow: status === 'processing' || status === 'recording' ? `0 0 10px ${config.bg}` : "none",
+        backdropFilter: "blur(4px)"
       }}
     >
+      {status === 'processing' && (
+        <span style={{ marginRight: 8, fontSize: 10 }}>●</span>
+      )}
       {config.label}
     </span>
   );
@@ -203,35 +279,41 @@ export function MetricCard({
 
   return (
     <div
+      className="glass-panel"
       style={{
-        padding: 16,
-        background: "var(--bg-color)",
-        borderRadius: 8,
+        padding: 20,
+        borderRadius: 16,
         textAlign: "center",
-        border: "1px solid var(--border-color)",
+        transition: "transform 0.2s ease",
       }}
     >
-      <div style={{ fontSize: 12, opacity: 0.7, marginBottom: 8, color: "var(--text-secondary)" }}>
+      <div style={{ fontSize: 13, opacity: 0.7, marginBottom: 8, color: "var(--text-secondary)", textTransform: "uppercase", letterSpacing: "0.05em" }}>
         {label}
       </div>
-      <div style={{ fontSize: 24, fontWeight: 700, color }}>{percentage}%</div>
+      <div style={{ 
+        fontSize: 32, 
+        fontWeight: 800, 
+        color,
+        textShadow: `0 0 20px ${color}40`
+      }}>{percentage}%</div>
     </div>
   );
 }
 
 export function TranscriptList({ transcript }: { transcript: TranscriptParagraph[] }) {
   return (
-    <div style={{ maxHeight: 400, overflowY: "auto" }}>
+    <div style={{ maxHeight: 400, overflowY: "auto", paddingRight: 8 }}>
       {transcript.map((para, idx) => (
         <div
           key={para.id}
           style={{
-            padding: 16,
-            background: "var(--bg-color)",
-            borderRadius: 8,
+            padding: 20,
+            background: "rgba(255, 255, 255, 0.02)",
+            borderRadius: 12,
             marginBottom: 12,
             borderLeft: "3px solid var(--primary-color)",
-            border: "1px solid var(--border-color)",
+            border: "1px solid var(--card-border)",
+            transition: "background 0.2s ease"
           }}
         >
           <div
@@ -240,18 +322,20 @@ export function TranscriptList({ transcript }: { transcript: TranscriptParagraph
               opacity: 0.6,
               marginBottom: 8,
               color: "var(--text-secondary)",
+              display: "flex",
+              justifyContent: "space-between"
             }}
           >
-            문단 {idx + 1}
+            <span style={{ fontWeight: 600, color: "var(--primary-color)" }}>#{idx + 1}</span>
             {para.startMs !== undefined && (
-              <span style={{ marginLeft: 8 }}>
+              <span style={{ fontFamily: "monospace", background: "rgba(0,0,0,0.3)", padding: "2px 6px", borderRadius: 4 }}>
                 {formatTime(para.startMs)}
                 {para.endMs !== undefined &&
                   ` - ${formatTime(para.endMs)}`}
               </span>
             )}
           </div>
-          <p style={{ lineHeight: 1.6, wordBreak: "break-word", overflowWrap: "anywhere", color: "var(--text-primary)" }}>{para.text}</p>
+          <p style={{ lineHeight: 1.7, wordBreak: "break-word", overflowWrap: "anywhere", color: "var(--text-primary)", fontSize: 15 }}>{para.text}</p>
         </div>
       ))}
     </div>
@@ -260,19 +344,19 @@ export function TranscriptList({ transcript }: { transcript: TranscriptParagraph
 
 export function SummaryItemList({ items }: { items: SummaryItem[] }) {
   return (
-    <div style={{ maxHeight: 500, overflowY: "auto" }}>
+    <div style={{ maxHeight: 500, overflowY: "auto", paddingRight: 8 }}>
       {items.map((item, idx) => (
         <div
           key={item.id}
           style={{
-            padding: 16,
-            background: "var(--bg-color)",
-            borderRadius: 8,
+            padding: 20,
+            background: "rgba(255, 255, 255, 0.02)",
+            borderRadius: 12,
             marginBottom: 12,
             borderLeft: `3px solid ${
-              item.level === "overall" ? "#FACC15" : "var(--primary-color)"
+              item.level === "overall" ? "var(--accent-color)" : "var(--primary-color)"
             }`,
-            border: "1px solid var(--border-color)",
+            border: "1px solid var(--card-border)",
           }}
         >
           <div
@@ -280,43 +364,38 @@ export function SummaryItemList({ items }: { items: SummaryItem[] }) {
               display: "flex",
               justifyContent: "space-between",
               alignItems: "center",
-              marginBottom: 8,
+              marginBottom: 12,
             }}
           >
             <span
               style={{
-                fontSize: 12,
-                padding: "4px 8px",
+                fontSize: 11,
+                padding: "4px 10px",
                 background:
-                  item.level === "overall" ? "rgba(250, 204, 21, 0.2)" : "rgba(59, 130, 246, 0.2)",
-                color: item.level === "overall" ? "#FACC15" : "var(--primary-color)",
-                borderRadius: 6,
+                  item.level === "overall" ? "rgba(244, 114, 182, 0.1)" : "rgba(139, 92, 246, 0.1)",
+                color: item.level === "overall" ? "var(--accent-color)" : "var(--primary-color)",
+                borderRadius: 20,
+                fontWeight: 600,
+                border: `1px solid ${item.level === "overall" ? "rgba(244, 114, 182, 0.2)" : "rgba(139, 92, 246, 0.2)"}`
               }}
             >
-              {item.level === "overall" ? "전체" : `세그먼트 ${idx + 1}`}
+              {item.level === "overall" ? "전체 요약" : `세그먼트 ${idx + 1}`}
             </span>
-            <span style={{ fontSize: 12, opacity: 0.6, color: "var(--text-secondary)" }}>
-              점수: {(item.score * 100).toFixed(1)}%
+            <span style={{ fontSize: 13, fontWeight: 600, color: "var(--text-secondary)" }}>
+              신뢰도: <span style={{ color: "var(--text-primary)" }}>{(item.score * 100).toFixed(1)}%</span>
             </span>
           </div>
-          <p style={{ lineHeight: 1.6, marginBottom: 8, wordBreak: "break-word", overflowWrap: "anywhere", color: "var(--text-primary)" }}>
+          <p style={{ lineHeight: 1.7, marginBottom: 12, wordBreak: "break-word", overflowWrap: "anywhere", color: "var(--text-primary)", fontSize: 15 }}>
             {item.text}
           </p>
           {item.evidence_ids.length > 0 && (
-            <div style={{ fontSize: 12, opacity: 0.6, color: "var(--text-secondary)" }}>
-              증거: {item.evidence_ids.length}개
+            <div style={{ fontSize: 12, color: "var(--text-tertiary)", display: "flex", alignItems: "center", gap: 6 }}>
+              <span style={{ opacity: 0.7 }}>참조된 증거:</span>
+              <span style={{ background: "rgba(255,255,255,0.05)", padding: "2px 8px", borderRadius: 10 }}>{item.evidence_ids.length}개</span>
             </div>
           )}
         </div>
       ))}
     </div>
   );
-}
-
-// Helper Functions
-function formatTime(ms: number): string {
-  const seconds = Math.floor(ms / 1000);
-  const minutes = Math.floor(seconds / 60);
-  const remainingSeconds = seconds % 60;
-  return `${minutes}:${remainingSeconds.toString().padStart(2, "0")}`;
 }

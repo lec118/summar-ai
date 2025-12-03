@@ -28,13 +28,13 @@ export function LectureSelector({
   onCreateLecture,
 }: LectureSelectorProps) {
   return (
-    <div style={{ ...sectionStyle, padding: 24 }}>
-      <h2 style={{ fontSize: 20, marginBottom: 16, fontWeight: 600, color: "var(--text-primary)" }}>
+    <div style={{ ...sectionStyle, padding: 24, maxWidth: 800, margin: "0 auto", width: "100%" }}>
+      <h2 style={{ fontSize: 20, marginBottom: 16, fontWeight: 600, color: "var(--text-primary)", textAlign: "center" }}>
         강의 선택
       </h2>
-      
+
       {!showNewLectureForm ? (
-        <div style={{ display: "flex", gap: 12, flexWrap: "wrap", alignItems: "center" }}>
+        <div style={{ display: "flex", gap: 12, flexWrap: "wrap", alignItems: "center", justifyContent: "center" }}>
           <select
             onChange={(e) => {
               const lecture = lectures.find((l) => l.id === e.target.value);

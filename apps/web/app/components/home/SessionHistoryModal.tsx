@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useCallback, useState, memo } from "react";
 import { Session } from "@summa/shared";
 import { btnSm, th, td } from "../../styles/constants";
 
@@ -9,6 +9,111 @@ interface SessionHistoryModalProps {
   onSessionClick: (sessionId: string) => void;
   onDeleteSession: (session: Session) => void;
 }
+
+interface SessionRowProps {
+  session: Session;
+  index: number;
+  onClose: () => void;
+  onSessionClick: (sessionId: string) => void;
+  onDeleteSession: (session: Session) => void;
+}
+
+const SessionRow = memo(({ session, index, onClose, onSessionClick, onDeleteSession }: SessionRowProps) => {
+  const [isHovered, setIsHovered] = useState(false);
+
+  const handleRowClick = useCallback(() => {
+    onClose();
+    onSessionClick(session.id);
+  }, [onClose, onSessionClick, session.id]);
+
+  const handleOpenClick = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    onClose();
+    onSessionClick(session.id);
+  }, [onClose, onSessionClick, session.id]);
+
+  const handleDeleteClick = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    onDeleteSession(session);
+  }, [onDeleteSession, session]);
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "completed":
+        return {
+          bg: "rgba(34, 197, 94, 0.15)",
+          color: "#22C55E",
+          border: "rgba(34, 197, 94, 0.3)"
+        };
+      case "processing":
+        return {
+          bg: "rgba(250, 204, 21, 0.15)",
+          color: "#FACC15",
+          border: "rgba(250, 204, 21, 0.3)"
+        };
+      default:
+        return {
+          bg: "rgba(113, 113, 122, 0.15)",
+          color: "var(--text-secondary)",
+          border: "rgba(113, 113, 122, 0.3)"
+        };
+    }
+  };
+
+  const statusColors = getStatusColor(session.status);
+  const statusLabel = session.status === "idle" ? "대기 중"
+    : session.status === "processing" ? "처리 중"
+    : session.status === "completed" ? "완료"
+    : session.status;
+
+  return (
+    <tr
+      style={{
+        cursor: "pointer",
+        transition: "background 0.2s",
+        borderBottom: "1px solid var(--border-color)",
+        background: isHovered ? "#27272A" : "transparent"
+      }}
+      onClick={handleRowClick}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      <td style={td}>{index + 1}</td>
+      <td style={td}>
+        {new Date(session.createdAt ?? Date.now()).toLocaleString("ko-KR")}
+      </td>
+      <td style={td}>
+        <span
+          style={{
+            padding: "4px 12px",
+            borderRadius: 12,
+            fontSize: 13,
+            fontWeight: 600,
+            background: statusColors.bg,
+            color: statusColors.color,
+            border: `1px solid ${statusColors.border}`
+          }}
+        >
+          {statusLabel}
+        </span>
+      </td>
+      <td style={td}>
+        <button
+          onClick={handleOpenClick}
+          style={{ ...btnSm, background: "var(--primary-color)", boxShadow: "none" }}
+        >
+          열기
+        </button>
+        <button
+          onClick={handleDeleteClick}
+          style={{ ...btnSm, background: "#EF4444", boxShadow: "none" }}
+        >
+          삭제
+        </button>
+      </td>
+    </tr>
+  );
+});
 
 export function SessionHistoryModal({
   show,
@@ -97,87 +202,14 @@ export function SessionHistoryModal({
           </thead>
           <tbody>
             {sessions.map((s, idx) => (
-              <tr
+              <SessionRow
                 key={s.id}
-                style={{
-                  cursor: "pointer",
-                  transition: "background 0.2s",
-                  borderBottom: "1px solid var(--border-color)",
-                }}
-                onClick={() => {
-                  onClose();
-                  onSessionClick(s.id);
-                }}
-                onMouseEnter={(e) =>
-                  (e.currentTarget.style.background = "#27272A")
-                }
-                onMouseLeave={(e) =>
-                  (e.currentTarget.style.background = "transparent")
-                }
-              >
-                <td style={td}>{idx + 1}</td>
-                <td style={td}>
-                  {new Date(s.createdAt ?? Date.now()).toLocaleString("ko-KR")}
-                </td>
-                <td style={td}>
-                  <span
-                    style={{
-                      padding: "4px 12px",
-                      borderRadius: 12,
-                      fontSize: 13,
-                      fontWeight: 600,
-                      background:
-                        s.status === "completed"
-                          ? "rgba(34, 197, 94, 0.15)"
-                          : s.status === "processing"
-                          ? "rgba(250, 204, 21, 0.15)"
-                          : "rgba(113, 113, 122, 0.15)",
-                      color:
-                        s.status === "completed"
-                          ? "#22C55E"
-                          : s.status === "processing"
-                          ? "#FACC15"
-                          : "var(--text-secondary)",
-                      border: `1px solid ${
-                        s.status === "completed"
-                          ? "rgba(34, 197, 94, 0.3)"
-                          : s.status === "processing"
-                          ? "rgba(250, 204, 21, 0.3)"
-                          : "rgba(113, 113, 122, 0.3)"
-                      }`,
-                    }}
-                  >
-                    {s.status === "idle"
-                      ? "대기 중"
-                      : s.status === "processing"
-                      ? "처리 중"
-                      : s.status === "completed"
-                      ? "완료"
-                      : s.status}
-                  </span>
-                </td>
-                <td style={td}>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onClose();
-                      onSessionClick(s.id);
-                    }}
-                    style={{ ...btnSm, background: "var(--primary-color)", boxShadow: "none" }}
-                  >
-                    열기
-                  </button>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onDeleteSession(s);
-                    }}
-                    style={{ ...btnSm, background: "#EF4444", boxShadow: "none" }}
-                  >
-                    삭제
-                  </button>
-                </td>
-              </tr>
+                session={s}
+                index={idx}
+                onClose={onClose}
+                onSessionClick={onSessionClick}
+                onDeleteSession={onDeleteSession}
+              />
             ))}
             {sessions.length === 0 && (
               <tr>

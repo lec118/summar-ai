@@ -206,3 +206,48 @@ export const colors = {
   border: "#27272A",
   borderLight: "#3F3F46",
 };
+
+// Layout constants
+export const LAYOUT = {
+  maxWidth: {
+    main: 1000,
+    section: 800,
+  },
+  spacing: {
+    xs: 8,
+    sm: 12,
+    md: 16,
+    lg: 24,
+    xl: 32,
+    xxl: 40,
+    xxxl: 48,
+    huge: 60,
+  },
+  borderRadius: {
+    sm: 8,
+    md: 12,
+    lg: 16,
+    xl: 20,
+    xxl: 24,
+  },
+  fontSize: {
+    xs: 11,
+    sm: 13,
+    md: 15,
+    lg: 17,
+    xl: 20,
+    xxl: 24,
+    huge: 56,
+    timer: 72,
+  },
+  iconSize: {
+    sm: 24,
+    md: 32,
+    lg: 64,
+    xl: 80,
+  },
+  minHeight: {
+    recordingControl: 300,
+    stepCard: 140,
+  },
+} as const;

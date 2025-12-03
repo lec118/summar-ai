@@ -127,9 +127,6 @@ export function useRecording(
 ) {
   const [recording, setRecording] = useState(false);
   const [paused, setPaused] = useState(false);
-  const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(
-    null
-  );
   const [recordingCompleted, setRecordingCompleted] = useState(false);
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
   const [recordingTime, setRecordingTime] = useState(0);
@@ -204,7 +201,6 @@ export function useRecording(
 
         // Cleanup on error
         stream.getTracks().forEach((track) => track.stop());
-        setMediaRecorder(null);
         mediaRecorderRef.current = null;
         setRecording(false);
         setPaused(false);
@@ -238,7 +234,6 @@ export function useRecording(
       };
 
       recorder.start();
-      setMediaRecorder(recorder);
       mediaRecorderRef.current = recorder;
       setRecording(true);
 
@@ -251,16 +246,18 @@ export function useRecording(
   }
 
   function pauseRecording(): void {
-    if (mediaRecorder && mediaRecorder.state === "recording") {
-      mediaRecorder.pause();
+    const recorder = mediaRecorderRef.current;
+    if (recorder && recorder.state === "recording") {
+      recorder.pause();
       setPaused(true);
       stopTimer();
     }
   }
 
   function resumeRecording(): void {
-    if (mediaRecorder && mediaRecorder.state === "paused") {
-      mediaRecorder.resume();
+    const recorder = mediaRecorderRef.current;
+    if (recorder && recorder.state === "paused") {
+      recorder.resume();
       setPaused(false);
 
       // Resume timer from current elapsed time
@@ -269,9 +266,9 @@ export function useRecording(
   }
 
   function stopRecording(): void {
-    if (mediaRecorder && mediaRecorder.state !== "inactive") {
-      mediaRecorder.stop();
-      setMediaRecorder(null);
+    const recorder = mediaRecorderRef.current;
+    if (recorder && recorder.state !== "inactive") {
+      recorder.stop();
       mediaRecorderRef.current = null;
       setPaused(false);
       stopTimer();
