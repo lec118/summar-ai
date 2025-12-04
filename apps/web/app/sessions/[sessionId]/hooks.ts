@@ -262,6 +262,7 @@ export function useSummaryGeneration(
         `/sessions/${sessionId}/summarize`,
         {
           method: "POST",
+          body: JSON.stringify({}),
         }
       );
 
