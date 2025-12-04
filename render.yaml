@@ -29,7 +29,7 @@ services:
       - key: NODE_ENV
         value: production
       - key: ALLOWED_ORIGINS
-        value: https://web-7lfj1dtgz-chong-xx-s-projects.vercel.app,https://web-chong-xx-s-projects.vercel.app
+        value: https://summa-ai-eight.vercel.app,https://web-7lfj1dtgz-chong-xx-s-projects.vercel.app,https://web-chong-xx-s-projects.vercel.app
 
   # Worker Service (Background Jobs)
   - type: worker
