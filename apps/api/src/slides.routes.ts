@@ -48,12 +48,12 @@ export async function registerSlidesRoutes(app: FastifyInstance) {
     const pages = await extractPagesFromPDF(fpath);
 
     // Trim text to 4000 chars per page
-    const trimmed = pages.map((p: any) => ({
+    const trimmed = pages.map((p) => ({
       page: p.page,
       text: (p.text ?? "").slice(0, 4000)
     }));
 
-    const vectors = await embedTexts(trimmed.map((p: any) => p.text));
+    const vectors = await embedTexts(trimmed.map((p) => p.text));
 
     const deck = createDeck(lectureId, title, trimmed.map((p, i) => ({
       page: p.page,

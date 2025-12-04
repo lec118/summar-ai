@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import toast from "react-hot-toast";
 import { apiRequest, apiUpload, ApiError } from "../../lib/api";
 import type { Lecture, Session } from "@summa/shared";
 
@@ -25,7 +26,7 @@ export function useLectures() {
 
   async function createLecture(title: string): Promise<Lecture | null> {
     if (!title.trim()) {
-      alert("강의 제목을 입력해주세요.");
+      toast.error("강의 제목을 입력해주세요.");
       return null;
     }
 
@@ -43,7 +44,7 @@ export function useLectures() {
       const errorMessage =
         err instanceof ApiError ? err.message : "강의 생성에 실패했습니다.";
       setError(errorMessage);
-      alert(errorMessage);
+      toast.error(errorMessage);
       return null;
     }
   }
@@ -58,6 +59,7 @@ export function useSessions(activeLecture: Lecture | null) {
     if (!activeLecture) return;
 
     const lectureId = activeLecture.id;
+    let intervalId: NodeJS.Timeout | null = null;
 
     async function fetchSessions() {
       try {
@@ -70,9 +72,41 @@ export function useSessions(activeLecture: Lecture | null) {
       }
     }
 
-    fetchSessions();
-    const interval = setInterval(fetchSessions, 5000); // Poll every 5 seconds
-    return () => clearInterval(interval);
+    function startPolling() {
+      if (!intervalId) {
+        fetchSessions(); // Fetch immediately
+        intervalId = setInterval(fetchSessions, 5000);
+      }
+    }
+
+    function stopPolling() {
+      if (intervalId) {
+        clearInterval(intervalId);
+        intervalId = null;
+      }
+    }
+
+    // Handle page visibility changes
+    function handleVisibilityChange() {
+      if (document.hidden) {
+        stopPolling();
+      } else {
+        startPolling();
+      }
+    }
+
+    // Start polling if page is visible
+    if (!document.hidden) {
+      startPolling();
+    }
+
+    // Listen for visibility changes
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      stopPolling();
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
   }, [activeLecture]);
 
   async function createSession(
@@ -95,7 +129,7 @@ export function useSessions(activeLecture: Lecture | null) {
       return session.id;
     } catch (err) {
       console.error("Failed to create session:", err);
-      alert(
+      toast.error(
         err instanceof ApiError ? err.message : "세션 생성에 실패했습니다."
       );
       return null;
@@ -112,7 +146,7 @@ export function useSessions(activeLecture: Lecture | null) {
       setSessions((prev) => prev.filter((x) => x.id !== session.id));
     } catch (err) {
       console.error("Failed to delete session:", err);
-      alert(
+      toast.error(
         err instanceof ApiError ? err.message : "세션 삭제에 실패했습니다."
       );
     }
@@ -179,7 +213,7 @@ export function useRecording(
 
   async function startRecording(): Promise<void> {
     if (!activeLecture) {
-      alert("먼저 강의를 선택하거나 생성하세요.");
+      toast.error("먼저 강의를 선택하거나 생성하세요.");
       return;
     }
 
@@ -197,7 +231,7 @@ export function useRecording(
 
       recorder.onerror = (event) => {
         console.error("MediaRecorder error:", event);
-        alert("녹음 중 오류가 발생했습니다. 다시 시도해주세요.");
+        toast.error("녹음 중 오류가 발생했습니다. 다시 시도해주세요.");
 
         // Cleanup on error
         stream.getTracks().forEach((track) => track.stop());
@@ -225,7 +259,7 @@ export function useRecording(
         } catch (err) {
           console.error("Upload failed:", err);
           setRecording(false);
-          alert(
+          toast.error(
             err instanceof ApiError
               ? err.message
               : "녹음 업로드에 실패했습니다."
@@ -241,7 +275,7 @@ export function useRecording(
       startTimer();
     } catch (err) {
       console.error("Failed to start recording:", err);
-      alert("마이크 접근에 실패했습니다. 브라우저 권한을 확인해주세요.");
+      toast.error("마이크 접근에 실패했습니다. 브라우저 권한을 확인해주세요.");
     }
   }
 
@@ -309,7 +343,7 @@ export function useFileUpload(
     if (!file) return;
 
     if (!activeLecture) {
-      alert("먼저 강의를 선택하거나 생성하세요.");
+      toast.error("먼저 강의를 선택하거나 생성하세요.");
       return;
     }
 
@@ -334,7 +368,7 @@ export function useFileUpload(
       setCurrentSessionId(sessionId);
     } catch (err) {
       console.error("Upload failed:", err);
-      alert(
+      toast.error(
         err instanceof ApiError ? err.message : "파일 업로드에 실패했습니다."
       );
       setUploadingFile(false);

@@ -228,11 +228,36 @@ async function handleSummarize(job: Job) {
     console.log(
       `Summarize job for session ${sessionId}${
         deckId ? ` with deck ${deckId}` : ""
-      } - NOT YET IMPLEMENTED`
+      }`
     );
 
-    await new Promise((resolve) => setTimeout(resolve, 100));
-    return { ok: true, status: "placeholder" };
+    await job.updateProgress(10);
+
+    // Call the summarize endpoint internally
+    const response = await fetch(
+      `${API_BASE_URL}/sessions/${sessionId}/summarize`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({})
+      }
+    );
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(
+        `Failed to generate summary (${response.status}): ${errorText}`
+      );
+    }
+
+    await job.updateProgress(100);
+
+    const result = await response.json();
+    console.log(`✅ Summary generated for session ${sessionId}`);
+
+    return { ok: true, summary: result };
   } catch (error) {
     console.error(`Summarize job ${job.id} failed:`, error);
     throw error;

@@ -1,6 +1,7 @@
 import type { Lecture, Session } from "@summa/shared";
 import { randomUUID } from "crypto";
 import { PrismaClient } from "@prisma/client";
+import type { Session as PrismaSession } from "@prisma/client";
 import type { Redis } from "ioredis";
 
 // ============================================================================
@@ -45,7 +46,7 @@ export type SessionSegment = {
 /**
  * Helper function to convert Prisma Session to shared Session type
  */
-function toPrismaSession(prismaSession: any): Session {
+function toPrismaSession(prismaSession: PrismaSession): Session {
   return {
     id: prismaSession.id,
     lectureId: prismaSession.lectureId,

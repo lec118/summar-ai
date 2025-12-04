@@ -85,6 +85,13 @@ await app.register(rateLimit, {
 console.log('🔒 Security middleware registered (helmet + rate limiting)');
 
 // CORS configuration
+// Approved Vercel deployment domains (for security, only specific domains allowed)
+const APPROVED_VERCEL_DOMAINS = [
+  'summa-ai-eight.vercel.app',
+  'web-7lfj1dtgz-chong-xx-s-projects.vercel.app',
+  'web-chong-xx-s-projects.vercel.app'
+];
+
 await app.register(cors, {
   origin: (origin, cb) => {
     // Allow requests with no origin (like mobile apps or curl)
@@ -93,14 +100,19 @@ await app.register(cors, {
       return;
     }
 
-    // Allow if in allowedOrigins list
+    // Allow if in allowedOrigins list (from config)
     if (config.ALLOWED_ORIGINS.includes(origin)) {
       cb(null, true);
       return;
     }
 
-    // Allow all vercel.app domains
-    if (origin.endsWith('.vercel.app')) {
+    // SECURITY FIX: Only allow specific approved Vercel domains
+    // (Not all .vercel.app domains to prevent unauthorized access)
+    const isApprovedVercelDomain = APPROVED_VERCEL_DOMAINS.some(domain =>
+      origin === `https://${domain}` || origin === `http://${domain}`
+    );
+
+    if (isApprovedVercelDomain) {
       cb(null, true);
       return;
     }

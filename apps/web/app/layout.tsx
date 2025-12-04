@@ -1,5 +1,6 @@
 import './globals.css';
 import { ErrorBoundary } from './components/ErrorBoundary';
+import { ToastProvider } from './components/ToastProvider';
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -9,9 +10,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body>
         <ErrorBoundary>
-          <div style={{ 
-            maxWidth: 1200, 
-            margin: "0 auto", 
+          <div style={{
+            maxWidth: 1200,
+            margin: "0 auto",
             padding: "40px 24px",
             minHeight: "100vh",
             position: "relative",
@@ -20,6 +21,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             {children}
           </div>
         </ErrorBoundary>
+        <ToastProvider />
       </body>
     </html>
   );
