@@ -1,72 +1,25 @@
 services:
-  # Fastify API Server
   - type: web
-    name: summa-api
+    name: summa-ai-api
     runtime: node
-    region: oregon
-    plan: free
-    buildCommand: rm -rf apps/api/dist && pnpm install && cd apps/api && pnpm prisma generate && cd ../.. && pnpm -r build
-    startCommand: cd apps/api && pnpm prisma migrate deploy && pnpm start:all
+    buildCommand: |
+      rm -rf apps/api/dist &&
+      pnpm install &&
+      cd apps/api &&
+      pnpm prisma generate &&
+      cd ../.. &&
+      pnpm --filter @summa/shared build &&
+      pnpm --filter @summa/stt build &&
+      pnpm --filter @summa/embeddings build &&
+      pnpm --filter @summa/slides build &&
+      pnpm --filter @summa/summarizer build &&
+      pnpm --filter @summa/rag build &&
+      pnpm --filter @summa/audio build &&
+      pnpm --filter @summa/api build
+    startCommand: node apps/api/dist/server.js
     envVars:
       - key: NODE_VERSION
-        value: 18
-      - key: PORT
-        value: 10000
-      - key: DATABASE_URL
-        sync: false
-      - key: REDIS_URL
-        sync: false
-      - key: OPENAI_API_KEY
-        sync: false
-      - key: OPENAI_STT_MODEL
-        value: whisper-1
-      - key: OPENAI_EMBEDDING_MODEL
-        value: text-embedding-3-large
-      - key: SUMM_LLM
-        value: openai
-      - key: SUMM_OPENAI_MODEL
-        value: gpt-4-turbo
+        value: 20.18.0
       - key: NODE_ENV
         value: production
-      - key: ALLOWED_ORIGINS
-        value: https://summa-ai-eight.vercel.app,https://web-7lfj1dtgz-chong-xx-s-projects.vercel.app,https://web-chong-xx-s-projects.vercel.app
-
-  # Worker Service (Background Jobs)
-  - type: worker
-    name: summa-worker
-    runtime: node
-    region: oregon
-    plan: free
-    buildCommand: rm -rf apps/api/dist && pnpm install && cd apps/api && pnpm prisma generate && cd ../.. && pnpm -r build
-    startCommand: cd apps/api && pnpm start:worker
-    envVars:
-      - key: NODE_VERSION
-        value: 18
-      - key: DATABASE_URL
-        sync: false
-      - key: REDIS_URL
-        sync: false
-      - key: OPENAI_API_KEY
-        sync: false
-      - key: OPENAI_STT_MODEL
-        value: whisper-1
-      - key: OPENAI_EMBEDDING_MODEL
-        value: text-embedding-3-large
-      - key: SUMM_LLM
-        value: openai
-      - key: SUMM_OPENAI_MODEL
-        value: gpt-4-turbo
-      - key: NODE_ENV
-        value: production
-      - key: PORT
-        value: 4000
-      - key: API_INTERNAL_URL
-        value: http://localhost:10000
-
-databases:
-  # Redis for job queues
-  - name: summa-redis
-    region: oregon
-    plan: free
-    databaseName: summa
-    user: summa
+      - fromGroup: summa-ai-env
