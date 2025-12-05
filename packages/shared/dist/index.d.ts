@@ -27,7 +27,7 @@ declare const RouteParamsSchemas: {
         sid: string;
     }>;
 };
-declare const ALLOWED_AUDIO_MIMES: readonly ["audio/mpeg", "audio/mp3", "audio/wav", "audio/wave", "audio/webm", "audio/mp4", "audio/m4a", "audio/ogg", "video/mp4", "video/webm"];
+declare const ALLOWED_AUDIO_MIMES: readonly ["audio/mpeg", "audio/mp3", "audio/wav", "audio/wave", "audio/x-wav", "audio/webm", "audio/mp4", "audio/m4a", "audio/x-m4a", "audio/aac", "audio/aacp", "audio/ogg", "audio/flac", "audio/x-flac", "video/mp4", "video/webm"];
 declare const ALLOWED_PDF_MIMES: readonly ["application/pdf"];
 declare const FileValidators: {
     isAllowedAudioType: (mimetype: string) => boolean;

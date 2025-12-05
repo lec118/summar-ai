@@ -28,10 +28,16 @@ export const ALLOWED_AUDIO_MIMES = [
   'audio/mp3',
   'audio/wav',
   'audio/wave',
+  'audio/x-wav',
   'audio/webm',
   'audio/mp4',
   'audio/m4a',
+  'audio/x-m4a',
+  'audio/aac',
+  'audio/aacp',
   'audio/ogg',
+  'audio/flac',
+  'audio/x-flac',
   'video/mp4', // Sometimes audio recordings are video/mp4
   'video/webm'
 ] as const;
