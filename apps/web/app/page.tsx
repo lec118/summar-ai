@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { Lecture } from "@summa/shared";
+import { History, Library } from "lucide-react";
 import { useLectures, useSessions, useRecording, useFileUpload } from "./hooks/useHome";
 import { LectureSelector } from "./components/home/LectureSelector";
 import { ModeSelection } from "./components/home/ModeSelection";
@@ -32,6 +33,9 @@ export default function Home() {
   const recording = useRecording(activeLecture, createSession);
   const fileUpload = useFileUpload(activeLecture, createSession);
 
+  // Extract recordingTime for RecordingMode component
+  const { recordingTime } = recording;
+
   // Reset completion states when lecture changes
   const handleLectureChange = (lecture: Lecture | null) => {
     setActiveLecture(lecture);
@@ -60,18 +64,11 @@ export default function Home() {
   return (
     <main className="main-container">
       <div className="text-center mb-16 animate-float">
-        <h1 style={{ fontSize: '3.5rem', fontWeight: 800, marginBottom: '1.5rem', lineHeight: 1.2 }}>
+        <h1 style={{ fontSize: '3.5rem', fontWeight: 800, marginBottom: '1.5rem', lineHeight: 1.2 }} className="tracking-tight">
           Summa AI
-          <span style={{ color: "var(--primary-color)", marginLeft: 8 }}>.</span>
+          <span className="text-violet-500 ml-2">.</span>
         </h1>
-        <p style={{
-          color: "var(--text-secondary)",
-          fontSize: '1.25rem',
-          maxWidth: 600,
-          margin: "0 auto",
-          lineHeight: 1.6,
-          fontWeight: 500
-        }}>
+        <p className="text-slate-400 text-xl max-w-2xl mx-auto leading-relaxed font-medium">
           강의를 녹음하고 자동으로 텍스트 변환 및 요약을 생성합니다
         </p>
       </div>
@@ -97,19 +94,13 @@ export default function Home() {
       {activeLecture && (
         <>
           {/* History Button */}
-          <div style={{
-            width: '100%',
-            maxWidth: selectedMode ? 800 : 900,
-            marginTop: 32,
-            marginBottom: 16,
-            display: "flex",
-            justifyContent: "flex-end",
-          }}>
+          <div className="w-full max-w-4xl mt-8 mb-4 flex justify-end">
             <button
               onClick={() => setShowHistoryPopup(true)}
               className="btn btn-secondary"
             >
-              📋 녹음 기록
+              <History className="w-5 h-5 mr-2" />
+              녹음 기록
             </button>
           </div>
 
@@ -129,7 +120,7 @@ export default function Home() {
               pending={pending}
               recordingCompleted={recording.recordingCompleted}
               currentSessionId={currentSessionId}
-              recordingTime={recording.recordingTime}
+              recordingTime={recordingTime}
               onStartRecording={recording.startRecording}
               onPauseRecording={recording.pauseRecording}
               onResumeRecording={recording.resumeRecording}
@@ -159,12 +150,12 @@ export default function Home() {
 
       {/* Empty State when no lecture selected */}
       {!activeLecture && (
-        <div className="empty-state glass-panel">
-          <div style={{ fontSize: 64, marginBottom: 24 }}>📚</div>
-          <h3 style={{ fontSize: 24, marginBottom: 12, fontWeight: 700, color: "var(--text-primary)" }}>
+        <div className="empty-state glass-panel flex flex-col items-center">
+          <Library className="w-16 h-16 mb-6 text-slate-600" />
+          <h3 className="text-2xl font-bold mb-3 text-white">
             강의를 선택하거나 생성하세요
           </h3>
-          <p style={{ color: "var(--text-secondary)", fontSize: 17 }}>
+          <p className="text-slate-400 text-lg">
             위에서 "새 강의 만들기" 버튼을 눌러 시작하세요
           </p>
         </div>

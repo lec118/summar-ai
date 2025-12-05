@@ -19,7 +19,7 @@ describe('Health Check', () => {
   it('should validate constants', async () => {
     const { CONSTANTS } = await import('../config.js');
 
-    expect(CONSTANTS.MAX_FILE_SIZE).toBe(500 * 1024 * 1024);
+    expect(CONSTANTS.MAX_FILE_SIZE).toBe(3000 * 1024 * 1024); // Updated to 3GB
     expect(CONSTANTS.TRANSCRIBE_CONCURRENCY).toBeGreaterThan(0);
     expect(CONSTANTS.SUMMARIZE_CONCURRENCY).toBeGreaterThan(0);
   });

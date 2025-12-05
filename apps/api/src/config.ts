@@ -69,7 +69,7 @@ export const config = validateConfig();
 
 export const CONSTANTS = {
   // File upload limits
-  MAX_FILE_SIZE: 500 * 1024 * 1024, // 500MB
+  MAX_FILE_SIZE: 3000 * 1024 * 1024, // 3000MB (3GB) - supports up to 4 hours of audio
   MAX_FILES_PER_REQUEST: 1,
 
   // Worker settings

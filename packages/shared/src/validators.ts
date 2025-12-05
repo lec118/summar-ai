@@ -47,12 +47,12 @@ export const ALLOWED_PDF_MIMES = [
 ] as const;
 
 export const FileValidators = {
-  isAllowedAudioType: (mimetype: string): boolean => {
-    return ALLOWED_AUDIO_MIMES.includes(mimetype as any);
+  isAllowedAudioType: (mimetype: string): mimetype is typeof ALLOWED_AUDIO_MIMES[number] => {
+    return (ALLOWED_AUDIO_MIMES as readonly string[]).includes(mimetype);
   },
 
-  isAllowedPDFType: (mimetype: string): boolean => {
-    return ALLOWED_PDF_MIMES.includes(mimetype as any);
+  isAllowedPDFType: (mimetype: string): mimetype is typeof ALLOWED_PDF_MIMES[number] => {
+    return (ALLOWED_PDF_MIMES as readonly string[]).includes(mimetype);
   },
 
   validateFileSize: (size: number, maxMB: number): { valid: boolean; error?: string } => {
