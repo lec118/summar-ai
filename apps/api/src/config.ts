@@ -45,7 +45,7 @@ function validateConfig(): AppConfig {
     OPENAI_STT_MODEL: getOptionalEnv("OPENAI_STT_MODEL", "whisper-1"),
     OPENAI_EMBEDDING_MODEL: getOptionalEnv("OPENAI_EMBEDDING_MODEL", "text-embedding-3-large"),
     SUMM_LLM: getOptionalEnv("SUMM_LLM", "openai"),
-    SUMM_OPENAI_MODEL: getOptionalEnv("SUMM_OPENAI_MODEL", "gpt-4-turbo"),
+    SUMM_OPENAI_MODEL: getOptionalEnv("SUMM_OPENAI_MODEL", "gpt-4o"),
     API_INTERNAL_URL: process.env.API_INTERNAL_URL,
     API_URL: process.env.API_URL
   };
