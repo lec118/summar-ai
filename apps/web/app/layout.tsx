@@ -10,14 +10,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body>
         <ErrorBoundary>
-          <div style={{
-            maxWidth: 1200,
-            margin: "0 auto",
-            padding: "40px 24px",
-            minHeight: "100vh",
-            position: "relative",
-            zIndex: 1
-          }}>
+            <div className="min-h-screen relative z-10">
             {children}
           </div>
         </ErrorBoundary>

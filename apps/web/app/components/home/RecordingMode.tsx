@@ -1,6 +1,5 @@
 import React from 'react';
 import { RecordingControl } from './RecordingControl';
-import { btnSecondary } from '../../styles/constants';
 
 interface RecordingModeProps {
   recording: boolean;
@@ -30,10 +29,10 @@ export function RecordingMode({
   onBack,
 }: RecordingModeProps) {
   return (
-    <div style={{ width: '100%', maxWidth: 800, marginTop: 32 }}>
+    <div className="w-full max-w-3xl mx-auto mt-8">
       {/* Back Button */}
-      <div style={{ marginBottom: 16 }}>
-        <button onClick={onBack} style={btnSecondary}>
+      <div className="mb-4">
+        <button onClick={onBack} className="btn btn-secondary">
           ← 뒤로 가기
         </button>
       </div>

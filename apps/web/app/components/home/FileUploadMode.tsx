@@ -1,5 +1,4 @@
 import React from 'react';
-import { btnPrimary, btnSecondary } from '../../styles/constants';
 
 interface FileUploadModeProps {
   fileInputRef: React.RefObject<HTMLInputElement>;
@@ -21,45 +20,23 @@ export function FileUploadMode({
   onNavigateToSession,
 }: FileUploadModeProps) {
   return (
-    <div style={{ width: '100%', maxWidth: 800, marginTop: 32 }}>
+    <div className="w-full max-w-3xl mx-auto mt-8">
       {/* Back Button */}
-      <div style={{ marginBottom: 16 }}>
-        <button onClick={onBack} style={btnSecondary}>
+      <div className="mb-4">
+        <button onClick={onBack} className="btn btn-secondary">
           ← 뒤로 가기
         </button>
       </div>
 
       {/* Upload Container */}
-      <div
-        style={{
-          background: 'var(--bg-secondary)',
-          border: '2px solid var(--border-color)',
-          borderRadius: 16,
-          padding: '48px 32px',
-          textAlign: 'center',
-        }}
-      >
-        <div style={{ fontSize: 64, marginBottom: 24 }}>📁</div>
+      <div className="glass-panel rounded-2xl p-12 text-center border border-white/10">
+        <div className="text-7xl mb-6">📁</div>
 
-        <h2
-          style={{
-            fontSize: 28,
-            fontWeight: 700,
-            marginBottom: 16,
-            color: 'var(--text-primary)',
-          }}
-        >
+        <h2 className="text-3xl font-bold mb-4 text-white">
           음성 파일 업로드
         </h2>
 
-        <p
-          style={{
-            color: 'var(--text-secondary)',
-            marginBottom: 32,
-            fontSize: 16,
-            lineHeight: 1.6,
-          }}
-        >
+        <p className="text-slate-300 mb-8 text-base leading-relaxed">
           MP3, M4A, WAV 등의 음성 파일을 업로드하세요
         </p>
 
@@ -75,21 +52,11 @@ export function FileUploadMode({
             />
             <button
               onClick={() => fileInputRef.current?.click()}
-              style={{
-                ...btnPrimary,
-                fontSize: 18,
-                padding: '16px 48px',
-              }}
+              className="btn btn-primary text-lg px-12 py-4"
             >
               파일 선택
             </button>
-            <div
-              style={{
-                marginTop: 24,
-                fontSize: 14,
-                color: 'var(--text-tertiary)',
-              }}
-            >
+            <div className="mt-6 text-sm text-slate-500">
               권장: 1시간 이내의 강의 녹음
             </div>
           </>
@@ -97,21 +64,10 @@ export function FileUploadMode({
 
         {uploadingFile && (
           <div>
-            <div
-              style={{
-                fontSize: 48,
-                marginBottom: 16,
-              }}
-            >
+            <div className="text-5xl mb-4 animate-pulse">
               ⏳
             </div>
-            <div
-              style={{
-                fontSize: 18,
-                fontWeight: 600,
-                color: 'var(--primary-color)',
-              }}
-            >
+            <div className="text-lg font-semibold text-violet-400">
               업로드 중...
             </div>
           </div>
@@ -119,31 +75,15 @@ export function FileUploadMode({
 
         {fileUploaded && currentSessionId && (
           <div>
-            <div
-              style={{
-                fontSize: 48,
-                marginBottom: 16,
-              }}
-            >
+            <div className="text-5xl mb-4">
               ✅
             </div>
-            <div
-              style={{
-                fontSize: 20,
-                fontWeight: 600,
-                color: 'var(--success-color, #10b981)',
-                marginBottom: 24,
-              }}
-            >
+            <div className="text-xl font-semibold text-emerald-400 mb-6">
               업로드 완료!
             </div>
             <button
               onClick={onNavigateToSession}
-              style={{
-                ...btnPrimary,
-                fontSize: 18,
-                padding: '16px 48px',
-              }}
+              className="btn btn-primary text-lg px-12 py-4"
             >
               텍스트 변환하기 →
             </button>

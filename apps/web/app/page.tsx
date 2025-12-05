@@ -8,7 +8,6 @@ import { ModeSelection } from "./components/home/ModeSelection";
 import { RecordingMode } from "./components/home/RecordingMode";
 import { FileUploadMode } from "./components/home/FileUploadMode";
 import { SessionHistoryModal } from "./components/home/SessionHistoryModal";
-import { mainStyle, btnSecondary, emptyStateStyle } from "./styles/constants";
 
 type Mode = 'recording' | 'upload' | null;
 
@@ -59,22 +58,15 @@ export default function Home() {
   const currentSessionId = recording.currentSessionId || fileUpload.currentSessionId;
 
   return (
-    <main style={mainStyle}>
-      <div style={{ textAlign: 'center', marginBottom: 60 }}>
-        <h1 style={{
-          fontSize: 56,
-          marginBottom: 24,
-          fontWeight: 800,
-          color: "var(--text-primary)",
-          letterSpacing: "-0.02em",
-          lineHeight: 1.2
-        }}>
+    <main className="main-container">
+      <div className="text-center mb-16 animate-float">
+        <h1 style={{ fontSize: '3.5rem', fontWeight: 800, marginBottom: '1.5rem', lineHeight: 1.2 }}>
           Summa AI
           <span style={{ color: "var(--primary-color)", marginLeft: 8 }}>.</span>
         </h1>
         <p style={{
           color: "var(--text-secondary)",
-          fontSize: 20,
+          fontSize: '1.25rem',
           maxWidth: 600,
           margin: "0 auto",
           lineHeight: 1.6,
@@ -115,7 +107,7 @@ export default function Home() {
           }}>
             <button
               onClick={() => setShowHistoryPopup(true)}
-              style={btnSecondary}
+              className="btn btn-secondary"
             >
               📋 녹음 기록
             </button>
@@ -167,7 +159,7 @@ export default function Home() {
 
       {/* Empty State when no lecture selected */}
       {!activeLecture && (
-        <div style={emptyStateStyle}>
+        <div className="empty-state glass-panel">
           <div style={{ fontSize: 64, marginBottom: 24 }}>📚</div>
           <h3 style={{ fontSize: 24, marginBottom: 12, fontWeight: 700, color: "var(--text-primary)" }}>
             강의를 선택하거나 생성하세요

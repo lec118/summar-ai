@@ -1,6 +1,5 @@
 import React from "react";
 import { Lecture } from "@summa/shared";
-import { btnPrimary, btnSecondary, selectStyle, sectionStyle, inputStyle } from "../../styles/constants";
 
 interface LectureSelectorProps {
   lectures: Lecture[];
@@ -28,20 +27,20 @@ export function LectureSelector({
   onCreateLecture,
 }: LectureSelectorProps) {
   return (
-    <div style={{ ...sectionStyle, padding: 24, maxWidth: 800, margin: "0 auto", width: "100%" }}>
-      <h2 style={{ fontSize: 20, marginBottom: 16, fontWeight: 600, color: "var(--text-primary)", textAlign: "center" }}>
+    <div className="section-card glass-panel max-w-3xl mx-auto w-full">
+      <h2 className="text-xl font-semibold mb-4 text-center text-white">
         강의 선택
       </h2>
 
       {!showNewLectureForm ? (
-        <div style={{ display: "flex", gap: 12, flexWrap: "wrap", alignItems: "center", justifyContent: "center" }}>
+        <div className="flex flex-wrap gap-3 items-center justify-center">
           <select
             onChange={(e) => {
               const lecture = lectures.find((l) => l.id === e.target.value);
               onSelectLecture(lecture || null);
             }}
             value={activeLecture?.id || ""}
-            style={selectStyle}
+            className="select-field min-w-[300px]"
           >
             <option value="">강의를 선택하세요</option>
             {lectures.map((lecture) => (
@@ -50,56 +49,45 @@ export function LectureSelector({
               </option>
             ))}
           </select>
-          <button onClick={onShowNewForm} style={btnSecondary}>
+          <button onClick={onShowNewForm} className="btn btn-secondary">
             + 새 강의 만들기
           </button>
         </div>
       ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-          <h3 style={{ fontSize: 16, fontWeight: 600, color: "var(--text-primary)" }}>새 강의 만들기</h3>
+        <div className="flex flex-col gap-3 max-w-md mx-auto">
+          <h3 className="text-base font-semibold text-white">새 강의 만들기</h3>
           <input
             type="text"
             value={newLectureTitle}
             onChange={(e) => onTitleChange(e.target.value)}
             placeholder="강의 제목을 입력하세요"
-            style={inputStyle}
+            className="input-field"
             autoFocus
           />
-          <div style={{ display: "flex", gap: 12 }}>
+          <div className="flex gap-3">
             <button
               onClick={onCreateLecture}
               disabled={pending}
-              style={{ ...btnPrimary, flex: 1, justifyContent: "center" }}
+              className="btn btn-primary flex-1 justify-center"
             >
               {pending ? "생성 중..." : "✓ 생성"}
             </button>
             <button 
               onClick={onHideNewForm} 
-              style={{ ...btnSecondary, flex: 1, justifyContent: "center" }}
+              className="btn btn-secondary flex-1 justify-center"
             >
               취소
             </button>
           </div>
-          <p style={{ fontSize: 13, color: "var(--text-secondary)", marginTop: 4 }}>
+          <p className="text-sm text-slate-400 mt-1">
             예: "2024 AI 기술 세미나", "Python 프로그래밍 강의 1주차"
           </p>
         </div>
       )}
 
       {activeLecture && !showNewLectureForm && (
-        <div style={{ marginTop: 16 }}>
-          <span
-            style={{
-              display: "inline-block",
-              padding: "6px 12px",
-              background: "rgba(59, 130, 246, 0.15)",
-              color: "var(--primary-color)",
-              borderRadius: 8,
-              fontSize: 14,
-              fontWeight: 500,
-              border: "1px solid rgba(59, 130, 246, 0.3)",
-            }}
-          >
+        <div className="mt-4 text-center">
+          <span className="inline-block px-3 py-1.5 bg-blue-500/15 text-blue-400 rounded-lg text-sm font-medium border border-blue-500/30">
             선택됨: {activeLecture.title}
           </span>
         </div>
