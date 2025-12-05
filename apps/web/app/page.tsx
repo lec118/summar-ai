@@ -4,9 +4,13 @@ import { useRouter } from "next/navigation";
 import type { Lecture } from "@summa/shared";
 import { useLectures, useSessions, useRecording, useFileUpload } from "./hooks/useHome";
 import { LectureSelector } from "./components/home/LectureSelector";
-import { RecordingControl } from "./components/home/RecordingControl";
+import { ModeSelection } from "./components/home/ModeSelection";
+import { RecordingMode } from "./components/home/RecordingMode";
+import { FileUploadMode } from "./components/home/FileUploadMode";
 import { SessionHistoryModal } from "./components/home/SessionHistoryModal";
 import { mainStyle, btnSecondary, emptyStateStyle } from "./styles/constants";
+
+type Mode = 'recording' | 'upload' | null;
 
 export default function Home() {
   const router = useRouter();
@@ -22,6 +26,9 @@ export default function Home() {
   const { sessions, createSession, deleteSession } = useSessions(activeLecture);
   const [showHistoryPopup, setShowHistoryPopup] = useState(false);
 
+  // Mode selection state
+  const [selectedMode, setSelectedMode] = useState<Mode>(null);
+
   // Recording hooks
   const recording = useRecording(activeLecture, createSession);
   const fileUpload = useFileUpload(activeLecture, createSession);
@@ -29,6 +36,7 @@ export default function Home() {
   // Reset completion states when lecture changes
   const handleLectureChange = (lecture: Lecture | null) => {
     setActiveLecture(lecture);
+    setSelectedMode(null); // Reset mode when lecture changes
     recording.setRecordingCompleted(false);
     fileUpload.setFileUploaded(false);
   };
@@ -53,9 +61,9 @@ export default function Home() {
   return (
     <main style={mainStyle}>
       <div style={{ textAlign: 'center', marginBottom: 60 }}>
-        <h1 style={{ 
-          fontSize: 56, 
-          marginBottom: 24, 
+        <h1 style={{
+          fontSize: 56,
+          marginBottom: 24,
           fontWeight: 800,
           color: "var(--text-primary)",
           letterSpacing: "-0.02em",
@@ -64,8 +72,8 @@ export default function Home() {
           Summa AI
           <span style={{ color: "var(--primary-color)", marginLeft: 8 }}>.</span>
         </h1>
-        <p style={{ 
-          color: "var(--text-secondary)", 
+        <p style={{
+          color: "var(--text-secondary)",
           fontSize: 20,
           maxWidth: 600,
           margin: "0 auto",
@@ -93,17 +101,18 @@ export default function Home() {
         onCreateLecture={handleCreateLecture}
       />
 
-      {/* Recording Actions - Only show when lecture is selected */}
+      {/* Mode Selection or Selected Mode UI */}
       {activeLecture && (
-        <div style={{ width: '100%', maxWidth: 800, marginTop: 32 }}>
-          {/* History Button - Above the recording frame */}
-          <div
-            style={{
-              marginBottom: 16,
-              display: "flex",
-              justifyContent: "flex-end",
-            }}
-          >
+        <>
+          {/* History Button */}
+          <div style={{
+            width: '100%',
+            maxWidth: selectedMode ? 800 : 900,
+            marginTop: 32,
+            marginBottom: 16,
+            display: "flex",
+            justifyContent: "flex-end",
+          }}>
             <button
               onClick={() => setShowHistoryPopup(true)}
               style={btnSecondary}
@@ -112,19 +121,48 @@ export default function Home() {
             </button>
           </div>
 
-          <RecordingControl
-            recording={recording.recording}
-            paused={recording.paused}
-            pending={pending}
-            recordingCompleted={recording.recordingCompleted}
-            currentSessionId={currentSessionId}
-            recordingTime={recording.recordingTime}
-            onStartRecording={recording.startRecording}
-            onPauseRecording={recording.pauseRecording}
-            onResumeRecording={recording.resumeRecording}
-            onStopRecording={recording.stopRecording}
-          />
-        </div>
+          {/* Mode Selection Screen */}
+          {!selectedMode && (
+            <ModeSelection
+              onSelectRecording={() => setSelectedMode('recording')}
+              onSelectUpload={() => setSelectedMode('upload')}
+            />
+          )}
+
+          {/* Recording Mode */}
+          {selectedMode === 'recording' && (
+            <RecordingMode
+              recording={recording.recording}
+              paused={recording.paused}
+              pending={pending}
+              recordingCompleted={recording.recordingCompleted}
+              currentSessionId={currentSessionId}
+              recordingTime={recording.recordingTime}
+              onStartRecording={recording.startRecording}
+              onPauseRecording={recording.pauseRecording}
+              onResumeRecording={recording.resumeRecording}
+              onStopRecording={recording.stopRecording}
+              onBack={() => setSelectedMode(null)}
+            />
+          )}
+
+          {/* File Upload Mode */}
+          {selectedMode === 'upload' && (
+            <FileUploadMode
+              fileInputRef={fileUpload.fileInputRef}
+              uploadingFile={fileUpload.uploadingFile}
+              fileUploaded={fileUpload.fileUploaded}
+              currentSessionId={fileUpload.currentSessionId}
+              onFileSelect={fileUpload.handleFileSelect}
+              onBack={() => setSelectedMode(null)}
+              onNavigateToSession={() => {
+                if (currentSessionId) {
+                  router.push(`/sessions/${currentSessionId}`);
+                }
+              }}
+            />
+          )}
+        </>
       )}
 
       {/* Empty State when no lecture selected */}
