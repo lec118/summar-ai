@@ -66,7 +66,7 @@ await app.register(helmet, {
 
 // Rate limiting
 await app.register(rateLimit, {
-  max: 100,  // 100 requests
+  max: 1000,  // 1000 requests per window (increased for file upload workflows)
   timeWindow: '15 minutes',
   cache: 10000,  // Cache size
   allowList: (req) => {
